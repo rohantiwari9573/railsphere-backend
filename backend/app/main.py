@@ -8,16 +8,19 @@ if platform.system() == "Windows":
 from fastapi import FastAPI
 from sqlalchemy import text
 
+import app.db.base_models
 from app.api.router import api_router
 from app.core.config import settings
 from app.db.base import Base
 from app.db.database import engine
-import app.db.base_models
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create all database tables if they don't exist
+    """
+    Create database tables on application startup.
+    """
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -30,6 +33,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+# Register all application routes
 app.include_router(api_router)
 
 
