@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import get_db
-from app.repositories.station_repository import StationRepository
+from app.api.dependencies import get_station_service
 from app.schemas.station import (
     StationCreate,
     StationResponse,
@@ -23,11 +21,8 @@ router = APIRouter(
 )
 async def create_station(
     station_data: StationCreate,
-    db: AsyncSession = Depends(get_db),
+    service: StationService = Depends(get_station_service),
 ):
-    repository = StationRepository(db)
-    service = StationService(repository)
-
     try:
         return await service.create_station(station_data)
 
@@ -43,11 +38,8 @@ async def create_station(
     response_model=list[StationResponse],
 )
 async def get_all_stations(
-    db: AsyncSession = Depends(get_db),
+    service: StationService = Depends(get_station_service),
 ):
-    repository = StationRepository(db)
-    service = StationService(repository)
-
     return await service.get_all_stations()
 
 
@@ -57,11 +49,8 @@ async def get_all_stations(
 )
 async def get_station(
     station_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: StationService = Depends(get_station_service),
 ):
-    repository = StationRepository(db)
-    service = StationService(repository)
-
     try:
         return await service.get_station(station_id)
 
@@ -79,11 +68,8 @@ async def get_station(
 async def update_station(
     station_id: int,
     station_data: StationUpdate,
-    db: AsyncSession = Depends(get_db),
+    service: StationService = Depends(get_station_service),
 ):
-    repository = StationRepository(db)
-    service = StationService(repository)
-
     try:
         return await service.update_station(
             station_id,
@@ -103,11 +89,8 @@ async def update_station(
 )
 async def delete_station(
     station_id: int,
-    db: AsyncSession = Depends(get_db),
+    service: StationService = Depends(get_station_service),
 ):
-    repository = StationRepository(db)
-    service = StationService(repository)
-
     try:
         await service.delete_station(station_id)
 
