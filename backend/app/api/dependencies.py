@@ -8,10 +8,12 @@ from app.db.session import get_db
 from app.repositories.user_repository import UserRepository
 from app.repositories.station_repository import StationRepository
 from app.repositories.train_repository import TrainRepository
+from app.repositories.route_repository import RouteRepository
 
 from app.services.auth_service import AuthService
 from app.services.station_service import StationService
 from app.services.train_service import TrainService
+from app.services.route_service import RouteService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -38,6 +40,12 @@ def get_train_repository(
     return TrainRepository(db)
 
 
+def get_route_repository(
+    db: AsyncSession = Depends(get_db),
+) -> RouteRepository:
+    return RouteRepository(db)
+
+
 # -----------------------------
 # Services
 # -----------------------------
@@ -58,6 +66,12 @@ def get_train_service(
     repository: TrainRepository = Depends(get_train_repository),
 ) -> TrainService:
     return TrainService(repository)
+
+
+def get_route_service(
+    repository: RouteRepository = Depends(get_route_repository),
+) -> RouteService:
+    return RouteService(repository)
 
 
 # -----------------------------

@@ -12,7 +12,7 @@ config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
+import app.db.base_models
 target_metadata = Base.metadata
 
 
