@@ -1,10 +1,11 @@
-from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import DateTime, Enum as SqlEnum, Integer, String, func
+from sqlalchemy import Enum as SqlEnum
+from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+from app.models.mixins import TimestampMixin
 
 
 class TrainType(str, Enum):
@@ -24,7 +25,7 @@ class TrainStatus(str, Enum):
     UNDER_MAINTENANCE = "UNDER_MAINTENANCE"
 
 
-class Train(Base):
+class Train(Base, TimestampMixin):
     __tablename__ = "trains"
 
     id: Mapped[int] = mapped_column(
@@ -58,18 +59,5 @@ class Train(Base):
     status: Mapped[TrainStatus] = mapped_column(
         SqlEnum(TrainStatus),
         default=TrainStatus.ACTIVE,
-        nullable=False,
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
         nullable=False,
     )
