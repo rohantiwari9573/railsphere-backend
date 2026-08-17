@@ -20,7 +20,6 @@ async def lifespan(app: FastAPI):
 
     Database schema is managed exclusively through Alembic.
     """
-
     yield
 
 
@@ -38,13 +37,6 @@ async def root():
     return {
         "message": "Welcome to RailSphere 🚆",
         "version": settings.APP_VERSION,
-    }
-
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
     }
 
 

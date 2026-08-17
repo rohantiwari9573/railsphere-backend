@@ -9,18 +9,26 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.station_repository import StationRepository
 from app.repositories.train_repository import TrainRepository
 from app.repositories.route_repository import RouteRepository
+from app.repositories.route_station_repository import (
+    RouteStationRepository,
+)
+from app.repositories.journey_repository import JourneyRepository
 
 from app.services.auth_service import AuthService
 from app.services.station_service import StationService
 from app.services.train_service import TrainService
 from app.services.route_service import RouteService
+from app.services.route_station_service import (
+    RouteStationService,
+)
+from app.services.journey_service import JourneyService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# -----------------------------
+# ------------------------------------------------
 # Repositories
-# -----------------------------
+# ------------------------------------------------
 
 def get_user_repository(
     db: AsyncSession = Depends(get_db),
@@ -46,9 +54,21 @@ def get_route_repository(
     return RouteRepository(db)
 
 
-# -----------------------------
+def get_route_station_repository(
+    db: AsyncSession = Depends(get_db),
+) -> RouteStationRepository:
+    return RouteStationRepository(db)
+
+
+def get_journey_repository(
+    db: AsyncSession = Depends(get_db),
+) -> JourneyRepository:
+    return JourneyRepository(db)
+
+
+# ------------------------------------------------
 # Services
-# -----------------------------
+# ------------------------------------------------
 
 def get_auth_service(
     repository: UserRepository = Depends(get_user_repository),
@@ -74,9 +94,35 @@ def get_route_service(
     return RouteService(repository)
 
 
-# -----------------------------
+def get_route_station_service(
+    route_station_repository: RouteStationRepository = Depends(
+        get_route_station_repository
+    ),
+    route_repository: RouteRepository = Depends(
+        get_route_repository
+    ),
+    station_repository: StationRepository = Depends(
+        get_station_repository
+    ),
+) -> RouteStationService:
+    return RouteStationService(
+        route_station_repository,
+        route_repository,
+        station_repository,
+    )
+
+
+def get_journey_service(
+    repository: JourneyRepository = Depends(
+        get_journey_repository,
+    ),
+) -> JourneyService:
+    return JourneyService(repository)
+
+
+# ------------------------------------------------
 # Authentication
-# -----------------------------
+# ------------------------------------------------
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

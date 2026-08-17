@@ -1,6 +1,9 @@
 from app.models.station import Station
 from app.repositories.station_repository import StationRepository
-from app.schemas.station import StationCreate, StationUpdate
+from app.schemas.station import (
+    StationCreate,
+    StationUpdate,
+)
 
 
 class StationService:
@@ -15,8 +18,10 @@ class StationService:
         station_data: StationCreate,
     ) -> Station:
 
-        existing_station = await self.repository.get_by_code(
-            station_data.code
+        existing_station = (
+            await self.repository.get_by_code(
+                station_data.code
+            )
         )
 
         if existing_station:
@@ -29,23 +34,37 @@ class StationService:
             name=station_data.name,
             city=station_data.city,
             state=station_data.state,
+            zone=station_data.zone,
+            address=station_data.address,
+            latitude=station_data.latitude,
+            longitude=station_data.longitude,
+            is_active=station_data.is_active,
         )
 
-        return await self.repository.create(station)
+        return await self.repository.create(
+            station
+        )
 
-    async def get_all_stations(self):
+    async def get_all_stations(
+        self,
+    ) -> list[Station]:
         return await self.repository.get_all()
 
     async def get_station(
         self,
         station_id: int,
-    ):
-        station = await self.repository.get_by_id(
-            station_id
+    ) -> Station:
+
+        station = (
+            await self.repository.get_by_id(
+                station_id
+            )
         )
 
         if not station:
-            raise ValueError("Station not found.")
+            raise ValueError(
+                "Station not found."
+            )
 
         return station
 
@@ -53,16 +72,23 @@ class StationService:
         self,
         station_id: int,
         station_data: StationUpdate,
-    ):
-        station = await self.repository.get_by_id(
-            station_id
+    ) -> Station:
+
+        station = (
+            await self.repository.get_by_id(
+                station_id
+            )
         )
 
         if not station:
-            raise ValueError("Station not found.")
+            raise ValueError(
+                "Station not found."
+            )
 
-        update_data = station_data.model_dump(
-            exclude_unset=True
+        update_data = (
+            station_data.model_dump(
+                exclude_unset=True
+            )
         )
 
         for key, value in update_data.items():
@@ -76,11 +102,18 @@ class StationService:
         self,
         station_id: int,
     ):
-        station = await self.repository.get_by_id(
-            station_id
+
+        station = (
+            await self.repository.get_by_id(
+                station_id
+            )
         )
 
         if not station:
-            raise ValueError("Station not found.")
+            raise ValueError(
+                "Station not found."
+            )
 
-        await self.repository.delete(station)
+        await self.repository.delete(
+            station
+        )

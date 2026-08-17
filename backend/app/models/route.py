@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Integer, String
@@ -10,6 +8,7 @@ from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.route_station import RouteStation
+    from app.models.schedule import Schedule
 
 
 class Route(Base, TimestampMixin):
@@ -39,8 +38,13 @@ class Route(Base, TimestampMixin):
         nullable=False,
     )
 
-    route_stations: Mapped[list[RouteStation]] = relationship(
+    route_stations: Mapped[list["RouteStation"]] = relationship(
         back_populates="route",
         cascade="all, delete-orphan",
         order_by="RouteStation.sequence_number",
+    )
+
+    schedules: Mapped[list["Schedule"]] = relationship(
+        back_populates="route",
+        cascade="all, delete-orphan",
     )

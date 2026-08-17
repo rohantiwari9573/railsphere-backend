@@ -45,3 +45,12 @@ build/
 
 # SQLite
 *.sqlite3
+
+# PostgreSQL Backups
+RailSphere_backups/
+
+# Raw import datasets (large; fetched/copied per-environment, not versioned)
+backend/datasets/
+
+# VS Code workspace settings (optional)
+*.code-workspace

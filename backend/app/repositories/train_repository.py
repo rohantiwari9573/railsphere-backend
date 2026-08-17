@@ -17,12 +17,21 @@ class TrainRepository:
         await self.db.refresh(train)
         return train
 
+    async def bulk_create(
+        self,
+        trains: list[Train],
+    ) -> None:
+        self.db.add_all(trains)
+        await self.db.commit()
+
     async def get_by_id(
         self,
         train_id: int,
     ) -> Train | None:
         result = await self.db.execute(
-            select(Train).where(Train.id == train_id)
+            select(Train).where(
+                Train.id == train_id
+            )
         )
         return result.scalar_one_or_none()
 
@@ -39,7 +48,9 @@ class TrainRepository:
 
     async def get_all(self) -> list[Train]:
         result = await self.db.execute(
-            select(Train)
+            select(Train).order_by(
+                Train.train_number
+            )
         )
         return list(result.scalars().all())
 

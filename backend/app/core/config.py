@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # Application Settings
     APP_NAME: str
     APP_VERSION: str
 
@@ -10,6 +11,7 @@ class Settings(BaseSettings):
     HOST: str
     PORT: int
 
+    # Database
     DATABASE_URL: str
 
     # JWT Settings

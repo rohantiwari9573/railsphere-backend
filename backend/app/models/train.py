@@ -1,28 +1,15 @@
-from enum import Enum
+from __future__ import annotations
 
-from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.mixins import TimestampMixin
 
-
-class TrainType(str, Enum):
-    EXPRESS = "EXPRESS"
-    SUPERFAST = "SUPERFAST"
-    PASSENGER = "PASSENGER"
-    RAJDHANI = "RAJDHANI"
-    SHATABDI = "SHATABDI"
-    VANDE_BHARAT = "VANDE_BHARAT"
-    DURONTO = "DURONTO"
-    GARIB_RATH = "GARIB_RATH"
-
-
-class TrainStatus(str, Enum):
-    ACTIVE = "ACTIVE"
-    INACTIVE = "INACTIVE"
-    UNDER_MAINTENANCE = "UNDER_MAINTENANCE"
+if TYPE_CHECKING:
+    from app.models.schedule import Schedule
 
 
 class Train(Base, TimestampMixin):
@@ -35,29 +22,52 @@ class Train(Base, TimestampMixin):
     )
 
     train_number: Mapped[str] = mapped_column(
-        String(10),
+        String(20),
         unique=True,
         nullable=False,
         index=True,
     )
 
     train_name: Mapped[str] = mapped_column(
-        String(100),
+        String(150),
+        nullable=False,
+        index=True,
+    )
+
+    train_type: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
     )
 
-    train_type: Mapped[TrainType] = mapped_column(
-        SqlEnum(TrainType),
-        nullable=False,
+    zone: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
     )
 
-    total_coaches: Mapped[int] = mapped_column(
+    distance_km: Mapped[int] = mapped_column(
         Integer,
+        default=0,
         nullable=False,
     )
 
-    status: Mapped[TrainStatus] = mapped_column(
-        SqlEnum(TrainStatus),
-        default=TrainStatus.ACTIVE,
+    duration_minutes: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
         nullable=False,
+    )
+
+    return_train_number: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    schedules: Mapped[list["Schedule"]] = relationship(
+        back_populates="train",
+        cascade="all, delete-orphan",
     )
