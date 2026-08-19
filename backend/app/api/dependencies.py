@@ -13,6 +13,7 @@ from app.repositories.route_station_repository import (
     RouteStationRepository,
 )
 from app.repositories.journey_repository import JourneyRepository
+from app.repositories.analytics_repository import AnalyticsRepository
 
 from app.services.auth_service import AuthService
 from app.services.station_service import StationService
@@ -22,6 +23,7 @@ from app.services.route_station_service import (
     RouteStationService,
 )
 from app.services.journey_service import JourneyService
+from app.services.analytics_service import AnalyticsService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -64,6 +66,12 @@ def get_journey_repository(
     db: AsyncSession = Depends(get_db),
 ) -> JourneyRepository:
     return JourneyRepository(db)
+
+
+def get_analytics_repository(
+    db: AsyncSession = Depends(get_db),
+) -> AnalyticsRepository:
+    return AnalyticsRepository(db)
 
 
 # ------------------------------------------------
@@ -118,6 +126,14 @@ def get_journey_service(
     ),
 ) -> JourneyService:
     return JourneyService(repository)
+
+
+def get_analytics_service(
+    repository: AnalyticsRepository = Depends(
+        get_analytics_repository,
+    ),
+) -> AnalyticsService:
+    return AnalyticsService(repository)
 
 
 # ------------------------------------------------

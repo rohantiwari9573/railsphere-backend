@@ -1,5 +1,10 @@
 from app.repositories.journey_repository import JourneyRepository
-from app.schemas.journey import JourneyResponse, JourneySearchResult
+from app.schemas.journey import (
+    JourneyResponse,
+    JourneySearchResult,
+    StationRouteInfo,
+    StationTrainInfo,
+)
 
 
 class JourneyService:
@@ -43,6 +48,50 @@ class JourneyService:
                     if row.arrival_time
                     else None
                 ),
+            )
+            for row in rows
+        ]
+
+    async def get_routes_for_station(
+        self,
+        station_id: int,
+    ) -> list[StationRouteInfo]:
+
+        rows = await self.repository.get_routes_for_station(station_id)
+
+        return [
+            StationRouteInfo(
+                route_id=row.route_id,
+                route_code=row.route_code,
+                route_name=row.route_name,
+                sequence_number=row.sequence_number,
+                arrival_time=(
+                    str(row.arrival_time) if row.arrival_time else None
+                ),
+                departure_time=(
+                    str(row.departure_time)
+                    if row.departure_time
+                    else None
+                ),
+            )
+            for row in rows
+        ]
+
+    async def get_trains_for_station(
+        self,
+        station_id: int,
+    ) -> list[StationTrainInfo]:
+
+        rows = await self.repository.get_trains_for_station(station_id)
+
+        return [
+            StationTrainInfo(
+                train_id=row.train_id,
+                train_number=row.train_number,
+                train_name=row.train_name,
+                train_type=row.train_type,
+                route_id=row.route_id,
+                route_code=row.route_code,
             )
             for row in rows
         ]
