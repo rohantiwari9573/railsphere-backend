@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.station import Station
@@ -14,11 +14,42 @@ class StationRepository:
         await self.db.refresh(station)
         return station
 
-    async def get_all(self) -> list[Station]:
-        result = await self.db.execute(
-            select(Station).order_by(Station.id)
+    def _search_filter(self, search: str | None):
+        if not search:
+            return None
+        pattern = f"%{search}%"
+        return or_(
+            Station.name.ilike(pattern),
+            Station.code.ilike(pattern),
+            Station.city.ilike(pattern),
         )
+
+    async def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> list[Station]:
+        query = select(Station).order_by(Station.id)
+
+        search_filter = self._search_filter(search)
+        if search_filter is not None:
+            query = query.where(search_filter)
+
+        query = query.offset(skip).limit(limit)
+
+        result = await self.db.execute(query)
         return list(result.scalars().all())
+
+    async def count(self, search: str | None = None) -> int:
+        query = select(func.count()).select_from(Station)
+
+        search_filter = self._search_filter(search)
+        if search_filter is not None:
+            query = query.where(search_filter)
+
+        result = await self.db.execute(query)
+        return result.scalar_one()
 
     async def get_by_id(self, station_id: int) -> Station | None:
         result = await self.db.execute(

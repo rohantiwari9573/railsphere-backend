@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_route_station_service
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.route_station import (
     RouteStationCreate,
     RouteStationResponse,
@@ -39,14 +40,32 @@ async def create_route_station(
 
 @router.get(
     "",
-    response_model=list[RouteStationResponse],
+    response_model=list[RouteStationResponse]
+    | PaginatedResponse[RouteStationResponse],
 )
 async def get_route_stations(
+    route_id: int | None = Query(
+        None,
+        description=(
+            "Return all stops for this route, in sequence order, "
+            "unpaginated (a route has at most a few dozen stops)."
+        ),
+    ),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     service: RouteStationService = Depends(
         get_route_station_service
     ),
 ):
-    return await service.get_route_stations()
+    if route_id is not None:
+        return await service.get_route_stations_by_route(route_id)
+
+    route_stations, total = await service.get_route_stations(
+        skip=skip, limit=limit
+    )
+    return PaginatedResponse(
+        items=route_stations, total=total, skip=skip, limit=limit
+    )
 
 
 @router.get(

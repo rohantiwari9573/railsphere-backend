@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_route_service
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.route import RouteCreate, RouteResponse, RouteUpdate
 from app.services.route_service import RouteService
 
@@ -30,12 +31,20 @@ async def create_route(
 
 @router.get(
     "",
-    response_model=list[RouteResponse],
+    response_model=PaginatedResponse[RouteResponse],
 )
 async def get_routes(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    search: str | None = Query(None, min_length=1),
     service: RouteService = Depends(get_route_service),
 ):
-    return await service.get_all_routes()
+    routes, total = await service.get_all_routes(
+        skip=skip, limit=limit, search=search
+    )
+    return PaginatedResponse(
+        items=routes, total=total, skip=skip, limit=limit
+    )
 
 
 @router.get(

@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.route_station import RouteStation
@@ -17,14 +17,27 @@ class RouteStationRepository:
         await self.db.refresh(route_station)
         return route_station
 
-    async def get_all(self) -> list[RouteStation]:
+    async def get_all(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> list[RouteStation]:
         result = await self.db.execute(
-            select(RouteStation).order_by(
+            select(RouteStation)
+            .order_by(
                 RouteStation.route_id,
                 RouteStation.sequence_number,
             )
+            .offset(skip)
+            .limit(limit)
         )
         return list(result.scalars().all())
+
+    async def count(self) -> int:
+        result = await self.db.execute(
+            select(func.count()).select_from(RouteStation)
+        )
+        return result.scalar_one()
 
     async def get_by_id(
         self,

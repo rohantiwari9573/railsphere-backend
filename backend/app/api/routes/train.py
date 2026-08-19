@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_train_service
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.train import (
     TrainCreate,
     TrainResponse,
@@ -35,12 +36,20 @@ async def create_train(
 
 @router.get(
     "",
-    response_model=list[TrainResponse],
+    response_model=PaginatedResponse[TrainResponse],
 )
 async def get_all_trains(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    search: str | None = Query(None, min_length=1),
     service: TrainService = Depends(get_train_service),
 ):
-    return await service.get_all_trains()
+    trains, total = await service.get_all_trains(
+        skip=skip, limit=limit, search=search
+    )
+    return PaginatedResponse(
+        items=trains, total=total, skip=skip, limit=limit
+    )
 
 
 @router.get(

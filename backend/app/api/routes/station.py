@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_station_service
+from app.schemas.pagination import PaginatedResponse
 from app.schemas.station import (
     StationCreate,
     StationResponse,
@@ -35,12 +36,20 @@ async def create_station(
 
 @router.get(
     "",
-    response_model=list[StationResponse],
+    response_model=PaginatedResponse[StationResponse],
 )
 async def get_all_stations(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    search: str | None = Query(None, min_length=1),
     service: StationService = Depends(get_station_service),
 ):
-    return await service.get_all_stations()
+    stations, total = await service.get_all_stations(
+        skip=skip, limit=limit, search=search
+    )
+    return PaginatedResponse(
+        items=stations, total=total, skip=skip, limit=limit
+    )
 
 
 @router.get(

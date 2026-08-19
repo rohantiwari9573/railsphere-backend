@@ -25,8 +25,17 @@ class RouteService:
 
         return route
 
-    async def get_all_routes(self) -> list[Route]:
-        return await self.route_repository.get_all()
+    async def get_all_routes(
+        self,
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> tuple[list[Route], int]:
+        routes = await self.route_repository.get_all(
+            skip=skip, limit=limit, search=search
+        )
+        total = await self.route_repository.count(search=search)
+        return routes, total
 
     async def update_route(
         self,

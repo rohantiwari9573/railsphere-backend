@@ -47,8 +47,15 @@ class StationService:
 
     async def get_all_stations(
         self,
-    ) -> list[Station]:
-        return await self.repository.get_all()
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> tuple[list[Station], int]:
+        stations = await self.repository.get_all(
+            skip=skip, limit=limit, search=search
+        )
+        total = await self.repository.count(search=search)
+        return stations, total
 
     async def get_station(
         self,

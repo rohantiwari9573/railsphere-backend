@@ -62,8 +62,15 @@ class TrainService:
 
     async def get_all_trains(
         self,
-    ) -> list[Train]:
-        return await self.repository.get_all()
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> tuple[list[Train], int]:
+        trains = await self.repository.get_all(
+            skip=skip, limit=limit, search=search
+        )
+        total = await self.repository.count(search=search)
+        return trains, total
 
     async def update_train(
         self,

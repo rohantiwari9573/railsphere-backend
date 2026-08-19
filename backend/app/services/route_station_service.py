@@ -80,8 +80,14 @@ class RouteStationService:
 
     async def get_route_stations(
         self,
-    ) -> list[RouteStation]:
-        return await self.route_station_repository.get_all()
+        skip: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[RouteStation], int]:
+        route_stations = await self.route_station_repository.get_all(
+            skip=skip, limit=limit
+        )
+        total = await self.route_station_repository.count()
+        return route_stations, total
 
     async def get_route_stations_by_route(
         self,
