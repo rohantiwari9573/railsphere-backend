@@ -11,6 +11,9 @@ from app.api.routes.route_station import (
 from app.api.routes.journey import (
     router as journey_router,
 )
+from app.api.routes.analytics import (
+    router as analytics_router,
+)
 
 api_router = APIRouter()
 
@@ -21,3 +24,4 @@ api_router.include_router(train_router)
 api_router.include_router(route_router)
 api_router.include_router(route_station_router)
 api_router.include_router(journey_router)
+api_router.include_router(analytics_router)
