@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import get_train_service
+from app.api.dependencies import get_journey_service, get_train_service
+from app.schemas.journey import TrainRouteInfo
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.train import (
     TrainCreate,
     TrainResponse,
     TrainUpdate,
 )
+from app.services.journey_service import JourneyService
 from app.services.train_service import TrainService
 
 router = APIRouter(
@@ -68,6 +70,26 @@ async def get_train(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+
+
+@router.get(
+    "/{train_id}/routes",
+    response_model=list[TrainRouteInfo],
+)
+async def get_train_routes(
+    train_id: int,
+    train_service: TrainService = Depends(get_train_service),
+    journey_service: JourneyService = Depends(get_journey_service),
+):
+    try:
+        await train_service.get_train(train_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+    return await journey_service.get_routes_for_train(train_id)
 
 
 @router.put(

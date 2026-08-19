@@ -100,6 +100,22 @@ class JourneyRepository:
         )
         return result.all()
 
+    async def get_routes_for_train(self, train_id: int):
+        """Routes a given train runs on, via its schedules."""
+        result = await self.db.execute(
+            select(
+                Route.id.label("route_id"),
+                Route.route_code,
+                Route.route_name,
+                Schedule.start_time,
+                Schedule.end_time,
+            )
+            .join(Schedule, Schedule.route_id == Route.id)
+            .where(Schedule.train_id == train_id)
+            .order_by(Route.route_code)
+        )
+        return result.all()
+
     async def get_all_journeys(self):
 
         result = await self.db.execute(

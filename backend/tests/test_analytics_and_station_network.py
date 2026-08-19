@@ -114,3 +114,43 @@ async def test_station_routes_and_trains(client, db_session):
 async def test_station_routes_404_for_missing_station(client):
     response = await client.get("/stations/999999/routes")
     assert response.status_code == 404
+
+
+async def test_train_routes(client, db_session):
+    route = await client.post(
+        "/routes", json={"route_code": "TRT-RTE", "route_name": "Train Route"}
+    )
+    route_id = route.json()["id"]
+
+    train = await client.post(
+        "/trains",
+        json={
+            "train_number": "TRTTR",
+            "train_name": "Train Route Train",
+            "train_type": "Express",
+        },
+    )
+    train_id = train.json()["id"]
+
+    db_session.add(
+        Schedule(
+            train_id=train_id,
+            route_id=route_id,
+            start_time=time(6, 0),
+            end_time=time(14, 0),
+        )
+    )
+    await db_session.commit()
+
+    response = await client.get(f"/trains/{train_id}/routes")
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["route_id"] == route_id
+    assert body[0]["start_time"] == "06:00:00"
+    assert body[0]["end_time"] == "14:00:00"
+
+
+async def test_train_routes_404_for_missing_train(client):
+    response = await client.get("/trains/999999/routes")
+    assert response.status_code == 404

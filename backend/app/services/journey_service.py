@@ -4,6 +4,7 @@ from app.schemas.journey import (
     JourneySearchResult,
     StationRouteInfo,
     StationTrainInfo,
+    TrainRouteInfo,
 )
 
 
@@ -92,6 +93,24 @@ class JourneyService:
                 train_type=row.train_type,
                 route_id=row.route_id,
                 route_code=row.route_code,
+            )
+            for row in rows
+        ]
+
+    async def get_routes_for_train(
+        self,
+        train_id: int,
+    ) -> list[TrainRouteInfo]:
+
+        rows = await self.repository.get_routes_for_train(train_id)
+
+        return [
+            TrainRouteInfo(
+                route_id=row.route_id,
+                route_code=row.route_code,
+                route_name=row.route_name,
+                start_time=str(row.start_time),
+                end_time=str(row.end_time),
             )
             for row in rows
         ]

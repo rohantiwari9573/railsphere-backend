@@ -36,3 +36,11 @@ class StationTrainInfo(BaseModel):
     train_type: str
     route_id: int
     route_code: str
+
+
+class TrainRouteInfo(BaseModel):
+    route_id: int
+    route_code: str
+    route_name: str
+    start_time: str
+    end_time: str
