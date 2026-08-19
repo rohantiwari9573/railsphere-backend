@@ -35,6 +35,7 @@ class JourneyRepository:
                 Train.id.label("train_id"),
                 Train.train_number,
                 Train.train_name,
+                Train.train_type,
                 Route.id.label("route_id"),
                 Route.route_code,
                 Route.route_name,

@@ -36,6 +36,7 @@ class JourneyService:
                 train_id=row.train_id,
                 train_number=row.train_number,
                 train_name=row.train_name,
+                train_type=row.train_type,
                 route_id=row.route_id,
                 route_code=row.route_code,
                 route_name=row.route_name,

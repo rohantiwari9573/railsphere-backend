@@ -13,6 +13,7 @@ class JourneySearchResult(BaseModel):
     train_id: int
     train_number: str
     train_name: str
+    train_type: str
     route_id: int
     route_code: str
     route_name: str
