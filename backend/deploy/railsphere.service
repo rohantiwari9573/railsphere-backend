@@ -1,0 +1,26 @@
+[Unit]
+Description=RailSphere FastAPI backend (gunicorn + uvicorn workers)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/railsphere-backend/backend
+Environment=PATH=/home/ubuntu/railsphere-backend/backend/.venv/bin
+ExecStart=/home/ubuntu/railsphere-backend/backend/.venv/bin/gunicorn app.main:app \
+    --workers 2 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8000 \
+    --timeout 60 \
+    --graceful-timeout 30 \
+    --access-logfile - \
+    --error-logfile -
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
