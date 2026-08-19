@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, Time
+from sqlalchemy import Boolean, ForeignKey, Integer, Time, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -13,6 +13,14 @@ if TYPE_CHECKING:
 
 class Schedule(Base, TimestampMixin):
     __tablename__ = "schedules"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "train_id",
+            "route_id",
+            name="uq_schedule_train_route",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         Integer,

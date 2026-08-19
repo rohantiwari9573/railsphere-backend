@@ -40,6 +40,7 @@ class ScheduleImporter(BaseImporter):
 
         train_map = await self._load_trains()
         route_map = await self._load_routes()
+        existing_pairs = await self._load_existing_pairs()
 
         grouped = defaultdict(list)
 
@@ -107,6 +108,11 @@ class ScheduleImporter(BaseImporter):
                 or end_time is None
             ):
                 continue
+
+            if (train_id, route_id) in existing_pairs:
+                continue
+
+            existing_pairs.add((train_id, route_id))
 
             schedules.append(
 
@@ -191,6 +197,19 @@ class ScheduleImporter(BaseImporter):
             route_code: route_id
             for route_code, route_id in result.all()
         }
+
+    async def _load_existing_pairs(
+        self,
+    ) -> set[tuple[int, int]]:
+
+        result = await self.db.execute(
+            select(
+                Schedule.train_id,
+                Schedule.route_id,
+            )
+        )
+
+        return set(result.all())
 
     @staticmethod
     def _parse_time(
