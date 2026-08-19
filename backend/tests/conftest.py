@@ -1,0 +1,73 @@
+import asyncio
+import platform
+
+if platform.system() == "Windows":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+import os
+
+os.environ.setdefault(
+    "DATABASE_URL",
+    "postgresql+psycopg://postgres:RoHaN999@localhost:5432/railsphere_test",
+)
+
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from app.core.config import settings
+from app.db.session import get_db
+from app.main import app
+
+test_engine = create_async_engine(settings.DATABASE_URL)
+
+
+@pytest_asyncio.fixture
+async def db_session():
+    """
+    Runs each test inside an outer transaction that's always rolled
+    back, so tests never leave data behind regardless of order.
+    App code calls session.commit() directly (no savepoints of its
+    own), so join_transaction_mode="create_savepoint" is required --
+    it turns those commit() calls into savepoint releases instead of
+    ending the outer transaction.
+    """
+    async with test_engine.connect() as conn:
+        trans = await conn.begin()
+
+        session_factory = async_sessionmaker(
+            bind=conn,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint",
+        )
+
+        async with session_factory() as session:
+            yield session
+
+        await trans.rollback()
+
+
+@pytest_asyncio.fixture
+async def client(db_session):
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _guard_against_real_database():
+    if "railsphere_test" not in settings.DATABASE_URL:
+        raise RuntimeError(
+            "Tests must run against railsphere_test, not "
+            f"{settings.DATABASE_URL!r}. Refusing to continue."
+        )
