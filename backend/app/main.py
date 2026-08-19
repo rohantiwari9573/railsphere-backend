@@ -1,17 +1,23 @@
 import asyncio
+import logging
 import platform
 from contextlib import asynccontextmanager
 
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.core.logging_config import configure_logging
 from app.db.database import engine
+
+configure_logging()
+logger = logging.getLogger("app")
 
 
 @asynccontextmanager
@@ -40,6 +46,17 @@ if settings.cors_origins_list:
     )
 
 app.include_router(api_router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception(
+        "Unhandled exception on %s %s", request.method, request.url.path
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error."},
+    )
 
 
 @app.get("/")
