@@ -1,6 +1,7 @@
 from datetime import time
 
 from app.models.schedule import Schedule
+from app.repositories.analytics_repository import AnalyticsRepository
 
 
 async def test_analytics_overview_reflects_real_counts(client):
@@ -20,7 +21,7 @@ async def test_analytics_overview_reflects_real_counts(client):
     assert isinstance(body["avg_stations_per_route"], float)
 
 
-async def test_top_stations_ranks_by_route_count(client):
+async def test_top_stations_ranks_by_route_count(client, db_session):
     route_a = await client.post(
         "/routes", json={"route_code": "TSA", "route_name": "Route A"}
     )
@@ -49,6 +50,11 @@ async def test_top_stations_ranks_by_route_count(client):
         },
     )
 
+    # top-stations is served from a materialized view (see
+    # AnalyticsRepository.refresh_views) which only picks up new rows
+    # once refreshed -- it doesn't update live on every insert.
+    await AnalyticsRepository(db_session).refresh_views()
+
     response = await client.get("/analytics/top-stations?limit=50")
 
     assert response.status_code == 200
@@ -57,6 +63,64 @@ async def test_top_stations_ranks_by_route_count(client):
     ]
     assert len(matching) == 1
     assert matching[0]["route_count"] == 2
+
+
+async def test_top_stations_is_stale_until_refreshed(client, db_session):
+    route = await client.post(
+        "/routes", json={"route_code": "STL-RTE", "route_name": "Stale Route"}
+    )
+    station = await client.post(
+        "/stations", json={"code": "STL", "name": "Stale Station"}
+    )
+    station_id = station.json()["id"]
+
+    await client.post(
+        "/route-stations",
+        json={
+            "route_id": route.json()["id"],
+            "station_id": station_id,
+            "sequence_number": 1,
+        },
+    )
+
+    before = await client.get("/analytics/top-stations?limit=50")
+    assert all(
+        row["station_id"] != station_id for row in before.json()
+    )
+
+    await AnalyticsRepository(db_session).refresh_views()
+
+    after = await client.get("/analytics/top-stations?limit=50")
+    assert any(row["station_id"] == station_id for row in after.json())
+
+
+async def test_top_routes_ranks_by_stop_count(client, db_session):
+    route = await client.post(
+        "/routes", json={"route_code": "TRR", "route_name": "Top Route"}
+    )
+    route_id = route.json()["id"]
+
+    for i in range(3):
+        station = await client.post(
+            "/stations", json={"code": f"TRR{i}", "name": f"Top Route Stop {i}"}
+        )
+        await client.post(
+            "/route-stations",
+            json={
+                "route_id": route_id,
+                "station_id": station.json()["id"],
+                "sequence_number": i + 1,
+            },
+        )
+
+    await AnalyticsRepository(db_session).refresh_views()
+
+    response = await client.get("/analytics/top-routes?limit=50")
+
+    assert response.status_code == 200
+    matching = [row for row in response.json() if row["route_id"] == route_id]
+    assert len(matching) == 1
+    assert matching[0]["stop_count"] == 3
 
 
 async def test_station_routes_and_trains(client, db_session):
