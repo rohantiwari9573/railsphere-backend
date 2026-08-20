@@ -83,7 +83,36 @@ Every domain (auth, stations, trains, routes, route-stations, journeys) follows 
 
 ---
 
-## Getting Started (local development)
+## Getting Started (Docker)
+
+The fastest way to get the full stack running — API, Postgres, Redis, and the
+background worker — with nothing installed but Docker:
+
+```bash
+git clone https://github.com/rohantiwari9573/railsphere-backend.git
+cd railsphere-backend
+docker compose up --build
+```
+
+This builds the image, starts Postgres and Redis, applies all migrations
+automatically on startup, then starts the API (`localhost:8000`) and the arq
+worker. Postgres and Redis are exposed on `5433` and `6380` on the host (not
+their usual `5432`/`6379`) specifically so they don't collide with a native
+Postgres/Redis you might already have running for local dev.
+
+The database starts empty — the real dataset (`backend/datasets/*.json`,
+~95MB) isn't in this repo. To populate it:
+
+```bash
+docker compose exec backend python -m app.importers.import_all
+```
+
+`docker compose down` stops everything; add `-v` to also drop the Postgres
+volume and start fresh next time.
+
+---
+
+## Getting Started (local development, no Docker)
 
 ### Clone and set up a virtual environment
 
@@ -184,6 +213,10 @@ Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/de
 - [x] Trigram search (`pg_trgm`) with similarity-ranked results
 - [x] Materialized views for analytics, refreshed by a scheduled background job
 - [x] Redis cache-aside layer for hot read paths (station/train lookups, analytics)
+- [x] WebSocket live updates + Prometheus metrics
+- [x] Docker + docker-compose (API, Postgres, Redis, worker)
+- [x] Load-tested with Locust (baseline in `backend/loadtest/README.md`)
+- [x] CI/CD auto-deploy to EC2 on push to `main`
 
 ---
 

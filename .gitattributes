@@ -1,0 +1,4 @@
+# Shell scripts must stay LF, even checked out on Windows -- CRLF in a
+# #!/bin/sh shebang breaks it inside a Linux container ("no such file
+# or directory", since \r becomes part of the interpreter path).
+*.sh text eol=lf
