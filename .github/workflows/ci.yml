@@ -54,3 +54,34 @@ jobs:
       - name: Run tests
         working-directory: backend
         run: python -m pytest -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    # Gated directly on the secret existing (not just branch/event) so
+    # this job is SKIPPED, not failed, until EC2_HOST and EC2_SSH_KEY
+    # are added as repo secrets -- see backend/deploy/README.md for
+    # exact setup steps. Without this check, every push to main would
+    # fail here with a red X the moment this workflow merges.
+    if: >-
+      github.ref == 'refs/heads/main' && github.event_name == 'push' &&
+      secrets.EC2_HOST != ''
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/railsphere-backend/backend
+            git pull origin main
+            .venv/bin/pip install -r requirements.txt
+            .venv/bin/alembic upgrade head
+            sudo systemctl restart railsphere
+            if systemctl is-enabled --quiet railsphere-worker 2>/dev/null; then
+              sudo systemctl restart railsphere-worker
+            fi
+            sudo systemctl --no-pager status railsphere --lines=0
