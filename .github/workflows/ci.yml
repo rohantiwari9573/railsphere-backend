@@ -58,17 +58,16 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    # Gated directly on the secret existing (not just branch/event) so
-    # this job is SKIPPED, not failed, until EC2_HOST and EC2_SSH_KEY
-    # are added as repo secrets -- see backend/deploy/README.md for
-    # exact setup steps. Without this check, every push to main would
-    # fail here with a red X the moment this workflow merges.
-    if: >-
-      github.ref == 'refs/heads/main' && github.event_name == 'push' &&
-      secrets.EC2_HOST != ''
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
+      # secrets aren't readable in a job-level `if:` (only github/needs/
+      # vars/inputs are), so the "skip until configured" check has to
+      # live on the step itself -- this SKIPS the step (green job, no
+      # SSH attempt) until EC2_HOST and EC2_SSH_KEY exist as repo
+      # secrets. See backend/deploy/README.md for exact setup steps.
       - name: Deploy over SSH
+        if: ${{ secrets.EC2_HOST != '' }}
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
