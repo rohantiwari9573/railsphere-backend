@@ -54,3 +54,6 @@ backend/datasets/
 
 # VS Code workspace settings (optional)
 *.code-workspace
+
+# Locust load-test output (regenerated per run)
+backend/loadtest/results_*
