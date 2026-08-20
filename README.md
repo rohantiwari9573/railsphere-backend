@@ -157,14 +157,14 @@ Currently deployed on a single AWS EC2 instance (Ubuntu, t3.micro):
 - **Database**: PostgreSQL running natively on the same instance (not in a container), bound to `127.0.0.1` only — not exposed to the internet
 - **Swap**: a 2GB swap file is configured (the instance only has ~900MB RAM; importing the full dataset needs headroom beyond that)
 
-Not yet configured: a domain name and HTTPS (nginx currently serves plain HTTP on port 80 only), CI/CD auto-deploy on push (deploys are manual via `git pull` + `systemctl restart railsphere` on the instance), and monitoring/alerting beyond `journalctl -u railsphere`.
+Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/deploy/nginx.conf`), so the API and any consumer of it get a valid certificate with no purchased domain required.
 
 ---
 
 ## API Documentation
 
-- Swagger UI: `http://<host>/docs`
-- ReDoc: `http://<host>/redoc`
+- Swagger UI: `https://<host>/docs`
+- ReDoc: `https://<host>/redoc`
 
 ---
 
@@ -179,13 +179,11 @@ Not yet configured: a domain name and HTTPS (nginx currently serves plain HTTP o
 - [x] CORS, structured logging, global unhandled-exception handler
 - [x] Test suite + CI
 - [x] EC2 deployment: systemd + gunicorn + nginx
-
-### Not done
-
-- [ ] Domain + HTTPS
-- [ ] CI/CD auto-deploy
-- [ ] Monitoring/alerting
-- [ ] Ticket booking, seat allocation, waitlist, fare calculation, payments (never started — out of scope for the current dataset-driven API)
+- [x] HTTPS via nip.io + Let's Encrypt
+- [x] Request-id tracing + per-IP rate limiting
+- [x] Trigram search (`pg_trgm`) with similarity-ranked results
+- [x] Materialized views for analytics, refreshed by a scheduled background job
+- [x] Redis cache-aside layer for hot read paths (station/train lookups, analytics)
 
 ---
 
