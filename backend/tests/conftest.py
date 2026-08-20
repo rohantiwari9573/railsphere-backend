@@ -17,10 +17,18 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.config import settings
+from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.main import app
 
 test_engine = create_async_engine(settings.DATABASE_URL)
+
+# The rate limiter's storage is in-memory and shared across the whole
+# process, so without this, enough tests hitting the same endpoint
+# (e.g. auth login/register, capped at 5/minute) would eventually
+# start failing with 429s purely from test-suite volume, not from
+# anything actually wrong with the app.
+limiter.enabled = False
 
 
 @pytest_asyncio.fixture

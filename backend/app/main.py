@@ -9,11 +9,16 @@ if platform.system() == "Windows":
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging_config import configure_logging
+from app.core.rate_limit import limiter
+from app.core.request_context import set_request_id
 from app.db.database import engine
 
 configure_logging()
@@ -36,6 +41,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 if settings.cors_origins_list:
     app.add_middleware(
         CORSMiddleware,
@@ -44,6 +53,14 @@ if settings.cors_origins_list:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = set_request_id(request.headers.get("X-Request-ID"))
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
+
 
 app.include_router(api_router)
 
