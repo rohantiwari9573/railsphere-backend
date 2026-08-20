@@ -61,13 +61,25 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      # secrets aren't readable in a job-level `if:` (only github/needs/
-      # vars/inputs are), so the "skip until configured" check has to
-      # live on the step itself -- this SKIPS the step (green job, no
-      # SSH attempt) until EC2_HOST and EC2_SSH_KEY exist as repo
-      # secrets. See backend/deploy/README.md for exact setup steps.
+      # secrets aren't directly usable in an `if:` expression at any
+      # level -- routing the value through env: into a step output is
+      # the standard way to gate a later step on "is this secret set",
+      # without the deploy step ever running (green job, no SSH
+      # attempt) until EC2_HOST and EC2_SSH_KEY exist as repo secrets.
+      # See backend/deploy/README.md for exact setup steps.
+      - name: Check deploy secrets are configured
+        id: check
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          if [ -n "$EC2_HOST" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy over SSH
-        if: ${{ secrets.EC2_HOST != '' }}
+        if: steps.check.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
