@@ -9,6 +9,7 @@ if platform.system() == "Windows":
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -17,6 +18,7 @@ from sqlalchemy import text
 from app.api.router import api_router
 from app.core.config import settings
 from app.core.logging_config import configure_logging
+from app.core.pg_listen import listen_for_analytics_refresh
 from app.core.rate_limit import limiter
 from app.core.request_context import set_request_id
 from app.db.database import engine
@@ -30,9 +32,14 @@ async def lifespan(app: FastAPI):
     """
     Application startup and shutdown events.
 
-    Database schema is managed exclusively through Alembic.
+    Database schema is managed exclusively through Alembic. The
+    pg LISTEN task bridges NOTIFYs from AnalyticsRepository.refresh_
+    views (which may run in a separate arq worker process) to this
+    process's connected /ws/analytics clients.
     """
+    listen_task = asyncio.create_task(listen_for_analytics_refresh())
     yield
+    listen_task.cancel()
 
 
 app = FastAPI(
@@ -44,6 +51,11 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+
+# Exposes request counts/latencies/status codes per route at /metrics
+# in Prometheus's text format -- point a Prometheus server (or just
+# `curl` it) at that endpoint, nothing else to run.
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 if settings.cors_origins_list:
     app.add_middleware(

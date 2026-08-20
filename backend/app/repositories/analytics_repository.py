@@ -55,7 +55,7 @@ class AnalyticsRepository:
         )
         return result.all()
 
-    async def refresh_views(self) -> None:
+    async def refresh_views(self):
         """
         Repopulate the top-stations/top-routes materialized views from
         current data. CONCURRENTLY avoids locking readers out while it
@@ -63,6 +63,11 @@ class AnalyticsRepository:
         alongside the views. Called on a schedule by the arq worker
         (app/worker.py) and by the `refresh-analytics-views` CLI
         script for a manual/one-off run.
+
+        Also records the refresh time and issues a Postgres NOTIFY on
+        the "analytics_refreshed" channel, which app.core.pg_listen
+        forwards to any /ws/analytics clients -- returns that
+        timestamp so callers can log it without a second query.
         """
         await self.db.execute(
             text("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_top_stations")
@@ -70,7 +75,28 @@ class AnalyticsRepository:
         await self.db.execute(
             text("REFRESH MATERIALIZED VIEW CONCURRENTLY mv_top_routes")
         )
+
+        result = await self.db.execute(
+            text(
+                "UPDATE analytics_refresh_state SET refreshed_at = now() "
+                "WHERE id = 1 RETURNING refreshed_at"
+            )
+        )
+        refreshed_at = result.scalar_one()
+
+        await self.db.execute(
+            text("SELECT pg_notify('analytics_refreshed', :payload)"),
+            {"payload": refreshed_at.isoformat()},
+        )
+
         await self.db.commit()
+        return refreshed_at
+
+    async def get_last_refreshed_at(self):
+        result = await self.db.execute(
+            text("SELECT refreshed_at FROM analytics_refresh_state WHERE id = 1")
+        )
+        return result.scalar_one_or_none()
 
     async def get_train_type_distribution(self):
         result = await self.db.execute(
