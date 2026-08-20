@@ -1,3 +1,4 @@
+from app.core.cache import Cache
 from app.repositories.analytics_repository import AnalyticsRepository
 from app.schemas.analytics import (
     NetworkOverview,
@@ -6,12 +7,25 @@ from app.schemas.analytics import (
     TrainTypeCount,
 )
 
+# Underlying data only changes on import/admin writes, so a short TTL
+# is purely about capping how many full-table-scan counts run per
+# minute under load -- it's not masking anything time-sensitive.
+_OVERVIEW_TTL_SECONDS = 300
+_TRAIN_TYPES_TTL_SECONDS = 300
+
 
 class AnalyticsService:
-    def __init__(self, repository: AnalyticsRepository):
+    def __init__(self, repository: AnalyticsRepository, cache: Cache):
         self.repository = repository
+        self.cache = cache
 
     async def get_overview(self) -> NetworkOverview:
+        cache_key = "analytics:overview"
+
+        cached = await self.cache.get_json(cache_key)
+        if cached is not None:
+            return NetworkOverview(**cached)
+
         counts = await self.repository.get_counts()
 
         avg_stations_per_route = (
@@ -20,7 +34,7 @@ class AnalyticsService:
             else 0.0
         )
 
-        return NetworkOverview(
+        overview = NetworkOverview(
             total_stations=counts["stations"],
             total_trains=counts["trains"],
             total_routes=counts["routes"],
@@ -28,6 +42,11 @@ class AnalyticsService:
             total_schedules=counts["schedules"],
             avg_stations_per_route=round(avg_stations_per_route, 2),
         )
+
+        await self.cache.set_json(
+            cache_key, overview.model_dump(), _OVERVIEW_TTL_SECONDS
+        )
+        return overview
 
     async def get_top_stations(self, limit: int = 10) -> list[TopStation]:
         rows = await self.repository.get_top_stations(limit=limit)
@@ -54,8 +73,21 @@ class AnalyticsService:
         ]
 
     async def get_train_type_distribution(self) -> list[TrainTypeCount]:
+        cache_key = "analytics:train-types"
+
+        cached = await self.cache.get_json(cache_key)
+        if cached is not None:
+            return [TrainTypeCount(**row) for row in cached]
+
         rows = await self.repository.get_train_type_distribution()
-        return [
+        result = [
             TrainTypeCount(train_type=row.train_type, count=row.count)
             for row in rows
         ]
+
+        await self.cache.set_json(
+            cache_key,
+            [item.model_dump() for item in result],
+            _TRAIN_TYPES_TTL_SECONDS,
+        )
+        return result

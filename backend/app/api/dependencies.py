@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import Cache, get_redis_client
 from app.core.jwt import decode_access_token
 from app.db.session import get_db
 
@@ -26,6 +27,10 @@ from app.services.journey_service import JourneyService
 from app.services.analytics_service import AnalyticsService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def get_cache() -> Cache:
+    return Cache(get_redis_client())
 
 
 # ------------------------------------------------
@@ -86,14 +91,16 @@ def get_auth_service(
 
 def get_station_service(
     repository: StationRepository = Depends(get_station_repository),
+    cache: Cache = Depends(get_cache),
 ) -> StationService:
-    return StationService(repository)
+    return StationService(repository, cache)
 
 
 def get_train_service(
     repository: TrainRepository = Depends(get_train_repository),
+    cache: Cache = Depends(get_cache),
 ) -> TrainService:
-    return TrainService(repository)
+    return TrainService(repository, cache)
 
 
 def get_route_service(
@@ -132,8 +139,9 @@ def get_analytics_service(
     repository: AnalyticsRepository = Depends(
         get_analytics_repository,
     ),
+    cache: Cache = Depends(get_cache),
 ) -> AnalyticsService:
-    return AnalyticsService(repository)
+    return AnalyticsService(repository, cache)
 
 
 # ------------------------------------------------

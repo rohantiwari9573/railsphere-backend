@@ -1,17 +1,27 @@
+from app.core.cache import Cache
 from app.models.train import Train
 from app.repositories.train_repository import TrainRepository
 from app.schemas.train import (
     TrainCreate,
+    TrainResponse,
     TrainUpdate,
 )
+
+_TRAIN_TTL_SECONDS = 600
+
+
+def _train_cache_key(train_id: int) -> str:
+    return f"train:{train_id}"
 
 
 class TrainService:
     def __init__(
         self,
         repository: TrainRepository,
+        cache: Cache,
     ):
         self.repository = repository
+        self.cache = cache
 
     async def create_train(
         self,
@@ -49,6 +59,11 @@ class TrainService:
         train_id: int,
     ) -> Train:
 
+        cache_key = _train_cache_key(train_id)
+        cached = await self.cache.get_json(cache_key)
+        if cached is not None:
+            return Train(**cached)
+
         train = await self.repository.get_by_id(
             train_id
         )
@@ -58,6 +73,11 @@ class TrainService:
                 "Train not found."
             )
 
+        await self.cache.set_json(
+            cache_key,
+            TrainResponse.model_validate(train).model_dump(),
+            _TRAIN_TTL_SECONDS,
+        )
         return train
 
     async def get_all_trains(
@@ -110,9 +130,11 @@ class TrainService:
         for key, value in update_data.items():
             setattr(train, key, value)
 
-        return await self.repository.update(
+        updated = await self.repository.update(
             train
         )
+        await self.cache.delete(_train_cache_key(train_id))
+        return updated
 
     async def delete_train(
         self,
@@ -131,3 +153,4 @@ class TrainService:
         await self.repository.delete(
             train
         )
+        await self.cache.delete(_train_cache_key(train_id))

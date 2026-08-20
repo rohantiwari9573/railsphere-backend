@@ -16,6 +16,10 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+import fakeredis
+
+from app.api.dependencies import get_cache
+from app.core.cache import Cache
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.db.session import get_db
@@ -70,6 +74,25 @@ async def client(db_session):
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def fake_redis():
+    client = fakeredis.FakeAsyncRedis(decode_responses=True)
+    yield client
+    await client.aclose()
+
+
+@pytest_asyncio.fixture
+async def cached_client(client, fake_redis):
+    """
+    Same client as `client`, but backed by a real (in-memory, fake)
+    Redis instead of the no-op Cache(None) every other test gets.
+    Only use this for tests that specifically exercise caching --
+    everything else should see fresh data on every request.
+    """
+    app.dependency_overrides[get_cache] = lambda: Cache(fake_redis)
+    yield client
 
 
 @pytest.fixture(autouse=True, scope="session")

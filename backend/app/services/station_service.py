@@ -1,17 +1,27 @@
+from app.core.cache import Cache
 from app.models.station import Station
 from app.repositories.station_repository import StationRepository
 from app.schemas.station import (
     StationCreate,
+    StationResponse,
     StationUpdate,
 )
+
+_STATION_TTL_SECONDS = 600
+
+
+def _station_cache_key(station_id: int) -> str:
+    return f"station:{station_id}"
 
 
 class StationService:
     def __init__(
         self,
         repository: StationRepository,
+        cache: Cache,
     ):
         self.repository = repository
+        self.cache = cache
 
     async def create_station(
         self,
@@ -62,6 +72,11 @@ class StationService:
         station_id: int,
     ) -> Station:
 
+        cache_key = _station_cache_key(station_id)
+        cached = await self.cache.get_json(cache_key)
+        if cached is not None:
+            return Station(**cached)
+
         station = (
             await self.repository.get_by_id(
                 station_id
@@ -73,6 +88,11 @@ class StationService:
                 "Station not found."
             )
 
+        await self.cache.set_json(
+            cache_key,
+            StationResponse.model_validate(station).model_dump(),
+            _STATION_TTL_SECONDS,
+        )
         return station
 
     async def update_station(
@@ -101,9 +121,11 @@ class StationService:
         for key, value in update_data.items():
             setattr(station, key, value)
 
-        return await self.repository.update(
+        updated = await self.repository.update(
             station
         )
+        await self.cache.delete(_station_cache_key(station_id))
+        return updated
 
     async def delete_station(
         self,
@@ -124,3 +146,4 @@ class StationService:
         await self.repository.delete(
             station
         )
+        await self.cache.delete(_station_cache_key(station_id))

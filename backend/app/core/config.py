@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     # "http://localhost:5173,https://railsphere.example.com"
     CORS_ORIGINS: str = ""
 
+    # Redis: used for response caching (app/core/cache.py) and as the
+    # arq job queue's broker (app/worker.py). Optional -- leave empty
+    # to run without Redis; caching then silently no-ops and the
+    # scheduled materialized-view refresh must be run manually via
+    # scripts/refresh_analytics_views.py instead.
+    REDIS_URL: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
