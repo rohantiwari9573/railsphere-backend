@@ -60,6 +60,9 @@ export function StationAutocomplete({
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           className="pl-9"
         />
         {isFetching && (

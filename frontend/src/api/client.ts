@@ -12,5 +12,19 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Strip empty-string/null/undefined query params rather than send
+  // them literally -- e.g. an empty search box would otherwise send
+  // `search=`, which fails the backend's min_length=1 validation.
+  if (config.params) {
+    const cleaned: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(config.params)) {
+      if (value !== "" && value !== null && value !== undefined) {
+        cleaned[key] = value;
+      }
+    }
+    config.params = cleaned;
+  }
+
   return config;
 });

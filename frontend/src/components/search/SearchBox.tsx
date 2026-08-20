@@ -46,7 +46,7 @@ export function SearchBox() {
 
   return (
     <div
-      className="rounded-2xl bg-card p-5 shadow-2xl shadow-black/10 sm:p-6"
+      className="rounded-2xl bg-card p-5 text-foreground shadow-2xl shadow-black/10 sm:p-6"
       onKeyDown={handleKeyDown}
     >
       <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">

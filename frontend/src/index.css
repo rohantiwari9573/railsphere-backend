@@ -27,7 +27,25 @@ body {
   color: #0f172a;
 }
 
+/*
+ * Textured overlay for the hero section. This must NOT be a
+ * `background-image` on the same element as Tailwind's `bg-gradient-*`
+ * utilities -- both would set the same CSS property, and since this
+ * rule lives outside any Tailwind `@layer`, it would win outright and
+ * silently blank out the gradient (which is exactly what happened
+ * here: white pattern lines on a background-image that fully replaced
+ * the blue gradient, leaving white text on a near-white background).
+ * A pseudo-element keeps the two independent.
+ */
 .rail-track-pattern {
+  position: relative;
+}
+
+.rail-track-pattern::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background-image:
     repeating-linear-gradient(
       90deg,
