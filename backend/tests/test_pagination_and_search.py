@@ -36,6 +36,28 @@ async def test_stations_search_filters_by_name_or_code(client):
     assert body["items"][0]["code"] == "SRCH"
 
 
+async def test_stations_search_ranks_closer_trigram_match_first(client):
+    # Both match "%kanpur%", but KANPUR CENTRAL is a near-exact
+    # trigram match while the other only contains it as a substring
+    # inside a much longer, unrelated name.
+    await client.post(
+        "/stations", json={"code": "TKC1", "name": "KANPUR CENTRAL"}
+    )
+    await client.post(
+        "/stations",
+        json={
+            "code": "TKC2",
+            "name": "Zzzzz Yyyyy Xxxxx Kanpur Wwwww Vvvvv",
+        },
+    )
+
+    response = await client.get("/stations?search=kanpur")
+
+    assert response.status_code == 200
+    codes = [item["code"] for item in response.json()["items"]]
+    assert codes.index("TKC1") < codes.index("TKC2")
+
+
 async def test_journey_search_between_stations(client, db_session):
     route = await client.post(
         "/routes",

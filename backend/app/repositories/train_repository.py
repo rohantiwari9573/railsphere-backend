@@ -61,11 +61,19 @@ class TrainRepository:
         limit: int = 50,
         search: str | None = None,
     ) -> list[Train]:
-        query = select(Train).order_by(Train.train_number)
+        query = select(Train)
 
         search_filter = self._search_filter(search)
         if search_filter is not None:
             query = query.where(search_filter)
+            # Best trigram match first (uses the gin_trgm_ops indexes).
+            similarity = func.greatest(
+                func.similarity(Train.train_name, search),
+                func.similarity(Train.train_number, search),
+            )
+            query = query.order_by(similarity.desc(), Train.train_number)
+        else:
+            query = query.order_by(Train.train_number)
 
         query = query.offset(skip).limit(limit)
 
