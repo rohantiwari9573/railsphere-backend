@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     # instance until a collector is actually configured.
     OTEL_EXPORTER_OTLP_ENDPOINT: str = ""
 
+    # Fernet key used to encrypt sensitive columns at rest (currently
+    # just User.email) -- generate one with:
+    # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Required (not optional/fail-open like REDIS_URL): without it,
+    # nothing that touches an encrypted column can run at all.
+    DATA_ENCRYPTION_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
