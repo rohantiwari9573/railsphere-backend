@@ -58,3 +58,7 @@ green, until you set these up:
 Once the two secrets exist, the very next push to `main` will deploy
 automatically. Push a trivial change first (e.g. a comment or this file) to
 confirm the `deploy` job runs and goes green before relying on it.
+
+**Status: live as of 2026-08-21.** `EC2_HOST` and `EC2_SSH_KEY` are set; the
+dedicated deploy key is authorized on the server and the sudoers rule is in
+place.
