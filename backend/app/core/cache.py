@@ -4,12 +4,19 @@ from typing import Any
 
 import redis.asyncio as redis
 
+from app.core.circuit_breaker import AsyncCircuitBreaker, CircuitBreakerOpen
 from app.core.config import settings
 
 logger = logging.getLogger("app")
 
 _client: redis.Redis | None = None
 _client_initialized = False
+
+# Trips after 5 consecutive Redis failures and stays open for 30s before
+# allowing a trial call again. Without this, a down/unreachable Redis
+# would make every request pay a full connection-timeout on each cache
+# call instead of failing fast once the circuit opens.
+_breaker = AsyncCircuitBreaker(fail_max=5, reset_timeout=30)
 
 
 def get_redis_client() -> redis.Redis | None:
@@ -46,7 +53,9 @@ class Cache:
         if self.client is None:
             return None
         try:
-            raw = await self.client.get(key)
+            raw = await _breaker.call(self.client.get, key)
+        except CircuitBreakerOpen:
+            return None
         except Exception:
             logger.warning(
                 "Cache GET failed for %s", key, exc_info=True
@@ -60,7 +69,11 @@ class Cache:
         if self.client is None:
             return
         try:
-            await self.client.set(key, json.dumps(value), ex=ttl_seconds)
+            await _breaker.call(
+                self.client.set, key, json.dumps(value), ex=ttl_seconds
+            )
+        except CircuitBreakerOpen:
+            return
         except Exception:
             logger.warning(
                 "Cache SET failed for %s", key, exc_info=True
@@ -70,7 +83,9 @@ class Cache:
         if self.client is None or not keys:
             return
         try:
-            await self.client.delete(*keys)
+            await _breaker.call(self.client.delete, *keys)
+        except CircuitBreakerOpen:
+            return
         except Exception:
             logger.warning(
                 "Cache DELETE failed for %s", keys, exc_info=True
