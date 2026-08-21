@@ -1,5 +1,31 @@
 # Deploy setup
 
+## Security group (EC2 firewall)
+
+Inbound rules on `sg-0d88894b2d2080204`:
+
+| Port | Source | Why |
+|------|--------|-----|
+| 80 | `0.0.0.0/0` | nginx redirects HTTP -> HTTPS |
+| 443 | `0.0.0.0/0` | Public API traffic |
+| 22 | `0.0.0.0/0` | SSH -- see below |
+
+Port 8000 (the app's direct gunicorn port) is **not** open to the internet --
+gunicorn binds to `127.0.0.1:8000` only, and nginx is the sole intended entry
+point. Verified by curling the port from outside after closing it: connection
+timeout, not just a config claim.
+
+**Why SSH (22) stays open to `0.0.0.0/0`:** the CI/CD `deploy` job (see
+`.github/workflows/ci.yml`) SSHes in from GitHub Actions' hosted-runner IPs,
+which are a large, constantly-rotating range with no practical way to
+allow-list in a security group. Restricting port 22 to a single IP would lock
+out that runner (and anyone whose IP changes) rather than meaningfully
+improving security here -- the actual mitigation already in place is the
+dedicated, single-purpose deploy key (not a personal key) and the narrow
+sudoers rule scoped to exactly two `systemctl restart` commands (see below),
+so a compromised deploy key can't do anything beyond restarting these two
+services.
+
 ## Systemd services
 
 - `railsphere.service` — the API (gunicorn + uvicorn workers)

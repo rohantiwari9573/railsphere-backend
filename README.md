@@ -224,6 +224,7 @@ Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/de
 - [x] `route_stations` (415k+ rows) hash-partitioned by `route_id` across 8 partitions
 - [x] Field-level encryption at rest for `User.email` (Fernet + HMAC blind index for lookups)
 - [x] Dataset files (95MB) hosted on S3, private bucket, ready for CloudFront (pending AWS account verification)
+- [x] EC2 security group hardened: closed the direct gunicorn port (8000), documented the SSH tradeoff (see `backend/deploy/README.md`)
 
 ---
 
