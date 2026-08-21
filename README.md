@@ -221,6 +221,7 @@ Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/de
 - [x] Circuit breaker around Redis cache calls
 - [x] Read-only GraphQL API alongside REST (`/graphql`)
 - [x] OpenTelemetry distributed tracing (Jaeger in local dev, opt-in via `OTEL_EXPORTER_OTLP_ENDPOINT`)
+- [x] `route_stations` (415k+ rows) hash-partitioned by `route_id` across 8 partitions
 
 ---
 
