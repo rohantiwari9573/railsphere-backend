@@ -17,6 +17,7 @@ from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import settings
+from app.graphql.schema import graphql_router
 from app.core.logging_config import configure_logging
 from app.core.pg_listen import listen_for_analytics_refresh
 from app.core.rate_limit import limiter
@@ -75,6 +76,7 @@ async def request_id_middleware(request: Request, call_next):
 
 
 app.include_router(api_router)
+app.include_router(graphql_router, prefix="/graphql")
 
 
 @app.exception_handler(Exception)
