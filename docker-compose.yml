@@ -28,6 +28,16 @@ services:
       timeout: 5s
       retries: 10
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      # Jaeger UI -- open http://localhost:16686 to see traces.
+      - "16686:16686"
+      # OTLP/HTTP receiver, used by OTEL_EXPORTER_OTLP_ENDPOINT below.
+      - "4318:4318"
+
   backend:
     build: ./backend
     depends_on:
@@ -47,6 +57,7 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       CORS_ORIGINS: "http://localhost:5173"
       REDIS_URL: redis://redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
     ports:
       - "8000:8000"
 

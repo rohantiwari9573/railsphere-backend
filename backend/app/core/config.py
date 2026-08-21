@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     # scripts/refresh_analytics_views.py instead.
     REDIS_URL: str = ""
 
+    # OpenTelemetry: base URL of an OTLP/HTTP collector (e.g.
+    # "http://jaeger:4318" in docker-compose). Optional -- leave empty
+    # to run without tracing; no instrumentation or exporter is set up
+    # at all in that case, so there's no cost on a memory-constrained
+    # instance until a collector is actually configured.
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

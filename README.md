@@ -85,8 +85,8 @@ Every domain (auth, stations, trains, routes, route-stations, journeys) follows 
 
 ## Getting Started (Docker)
 
-The fastest way to get the full stack running — API, Postgres, Redis, and the
-background worker — with nothing installed but Docker:
+The fastest way to get the full stack running — API, Postgres, Redis, Jaeger,
+and the background worker — with nothing installed but Docker:
 
 ```bash
 git clone https://github.com/rohantiwari9573/railsphere-backend.git
@@ -94,11 +94,12 @@ cd railsphere-backend
 docker compose up --build
 ```
 
-This builds the image, starts Postgres and Redis, applies all migrations
-automatically on startup, then starts the API (`localhost:8000`) and the arq
-worker. Postgres and Redis are exposed on `5433` and `6380` on the host (not
-their usual `5432`/`6379`) specifically so they don't collide with a native
-Postgres/Redis you might already have running for local dev.
+This builds the image, starts Postgres, Redis, and Jaeger, applies all
+migrations automatically on startup, then starts the API (`localhost:8000`)
+and the arq worker. Postgres and Redis are exposed on `5433` and `6380` on
+the host (not their usual `5432`/`6379`) specifically so they don't collide
+with a native Postgres/Redis you might already have running for local dev.
+Open `http://localhost:16686` for the Jaeger UI to see live request traces.
 
 The database starts empty — the real dataset (`backend/datasets/*.json`,
 ~95MB) isn't in this repo. To populate it:
@@ -214,9 +215,12 @@ Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/de
 - [x] Materialized views for analytics, refreshed by a scheduled background job
 - [x] Redis cache-aside layer for hot read paths (station/train lookups, analytics)
 - [x] WebSocket live updates + Prometheus metrics
-- [x] Docker + docker-compose (API, Postgres, Redis, worker)
+- [x] Docker + docker-compose (API, Postgres, Redis, Jaeger, worker)
 - [x] Load-tested with Locust (baseline in `backend/loadtest/README.md`)
 - [x] CI/CD auto-deploy to EC2 on push to `main`
+- [x] Circuit breaker around Redis cache calls
+- [x] Read-only GraphQL API alongside REST (`/graphql`)
+- [x] OpenTelemetry distributed tracing (Jaeger in local dev, opt-in via `OTEL_EXPORTER_OTLP_ENDPOINT`)
 
 ---
 

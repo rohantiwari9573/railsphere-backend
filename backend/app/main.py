@@ -22,6 +22,7 @@ from app.core.logging_config import configure_logging
 from app.core.pg_listen import listen_for_analytics_refresh
 from app.core.rate_limit import limiter
 from app.core.request_context import set_request_id
+from app.core.tracing import configure_tracing
 from app.db.database import engine
 
 configure_logging()
@@ -57,6 +58,7 @@ app.add_middleware(SlowAPIMiddleware)
 # in Prometheus's text format -- point a Prometheus server (or just
 # `curl` it) at that endpoint, nothing else to run.
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+configure_tracing(app)
 
 if settings.cors_origins_list:
     app.add_middleware(
