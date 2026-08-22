@@ -38,6 +38,29 @@ services:
       # OTLP/HTTP receiver, used by OTEL_EXPORTER_OTLP_ENDPOINT below.
       - "4318:4318"
 
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      # Grafana UI -- open http://localhost:3001, no login needed
+      # (anonymous admin, local dev only). The RailSphere Overview
+      # dashboard is provisioned automatically.
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
   backend:
     build: ./backend
     depends_on:
@@ -58,6 +81,9 @@ services:
       CORS_ORIGINS: "http://localhost:5173"
       REDIS_URL: redis://redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+      # Dev-only key, fine to have in this file -- local Docker stack
+      # only, never used against real data.
+      DATA_ENCRYPTION_KEY: jdQ58IGCToIXjghOvUDZeGxmeAId5A9_E6K11bXzYUM=
     ports:
       - "8000:8000"
 

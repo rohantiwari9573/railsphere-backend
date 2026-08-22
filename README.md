@@ -86,7 +86,8 @@ Every domain (auth, stations, trains, routes, route-stations, journeys) follows 
 ## Getting Started (Docker)
 
 The fastest way to get the full stack running — API, Postgres, Redis, Jaeger,
-and the background worker — with nothing installed but Docker:
+Prometheus, Grafana, and the background worker — with nothing installed but
+Docker:
 
 ```bash
 git clone https://github.com/rohantiwari9573/railsphere-backend.git
@@ -94,12 +95,18 @@ cd railsphere-backend
 docker compose up --build
 ```
 
-This builds the image, starts Postgres, Redis, and Jaeger, applies all
-migrations automatically on startup, then starts the API (`localhost:8000`)
-and the arq worker. Postgres and Redis are exposed on `5433` and `6380` on
-the host (not their usual `5432`/`6379`) specifically so they don't collide
-with a native Postgres/Redis you might already have running for local dev.
-Open `http://localhost:16686` for the Jaeger UI to see live request traces.
+This builds the image, starts Postgres, Redis, Jaeger, Prometheus, and
+Grafana, applies all migrations automatically on startup, then starts the
+API (`localhost:8000`) and the arq worker. Postgres and Redis are exposed on
+`5433` and `6380` on the host (not their usual `5432`/`6379`) specifically
+so they don't collide with a native Postgres/Redis you might already have
+running for local dev.
+
+- Open `http://localhost:16686` for the Jaeger UI to see live request traces.
+- Open `http://localhost:3001` for Grafana (anonymous admin access, no login
+  needed locally) — the "RailSphere Overview" dashboard is auto-provisioned
+  (`monitoring/`) with request rate, p95 latency, 5xx error rate, and memory
+  panels, backed by the Prometheus instance scraping `/metrics` every 15s.
 
 The database starts empty — the real dataset (`backend/datasets/*.json`,
 ~95MB) isn't in this repo. To populate it:
@@ -226,6 +233,12 @@ Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/de
 - [x] Dataset files (95MB) hosted on S3, private bucket, ready for CloudFront (pending AWS account verification)
 - [x] EC2 security group hardened: closed the direct gunicorn port (8000), documented the SSH tradeoff (see `backend/deploy/README.md`)
 - [x] Redis caching and the scheduled analytics-refresh worker are live in production (Upstash-hosted, `railsphere-worker.service` enabled on EC2)
+- [x] Frontend deployed to Vercel (CDN-backed, low-latency static hosting) with SPA routing fallback
+- [x] Grafana + Prometheus monitoring stack, provisioned as code (`monitoring/`), with a dashboard covering request rate, p95 latency, 5xx error rate, and memory
+- [x] Automated daily Postgres backups on EC2 (`pg_dump` → gzip → local disk, 7-day retention) via systemd timer
+- [x] gzip response compression for JSON/JS/CSS on the production nginx reverse proxy
+- [x] HTTP caching (`Cache-Control` + `ETag`, conditional `304` responses) on read-heavy GET endpoints
+- [x] SQLAlchemy async connection pool sized and tuned for the production instance's memory budget
 
 ---
 
