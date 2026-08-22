@@ -158,9 +158,20 @@ export function SearchResultsPage() {
                     </p>
                   </div>
 
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/routes/${journey.route_id}`}>View route</Link>
-                  </Button>
+                  <div className="flex shrink-0 gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/routes/${journey.route_id}`}>
+                        View route
+                      </Link>
+                    </Button>
+                    <Button size="sm" asChild>
+                      <Link
+                        to={`/book/${journey.train_id}/${journey.route_id}?from=${fromId}&to=${toId}`}
+                      >
+                        Book
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center gap-3">

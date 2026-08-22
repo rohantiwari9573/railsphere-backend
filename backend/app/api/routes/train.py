@@ -1,6 +1,13 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import get_journey_service, get_train_service
+from app.api.dependencies import (
+    get_booking_service,
+    get_journey_service,
+    get_train_service,
+)
+from app.schemas.booking import AvailabilityClass, SeatMapResponse
 from app.schemas.journey import TrainRouteInfo
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.train import (
@@ -8,6 +15,7 @@ from app.schemas.train import (
     TrainResponse,
     TrainUpdate,
 )
+from app.services.booking_service import BookingService
 from app.services.journey_service import JourneyService
 from app.services.train_service import TrainService
 
@@ -90,6 +98,58 @@ async def get_train_routes(
         )
 
     return await journey_service.get_routes_for_train(train_id)
+
+
+@router.get(
+    "/{train_id}/availability",
+    response_model=list[AvailabilityClass],
+)
+async def get_train_availability(
+    train_id: int,
+    journey_date: date = Query(...),
+    route_id: int | None = Query(None),
+    source_station_id: int | None = Query(None),
+    destination_station_id: int | None = Query(None),
+    train_service: TrainService = Depends(get_train_service),
+    booking_service: BookingService = Depends(get_booking_service),
+):
+    try:
+        train = await train_service.get_train(train_id)
+        return await booking_service.get_availability(
+            train,
+            journey_date,
+            route_id=route_id,
+            source_station_id=source_station_id,
+            destination_station_id=destination_station_id,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/{train_id}/seat-map",
+    response_model=SeatMapResponse,
+)
+async def get_train_seat_map(
+    train_id: int,
+    journey_date: date = Query(...),
+    travel_class: str = Query(...),
+    train_service: TrainService = Depends(get_train_service),
+    booking_service: BookingService = Depends(get_booking_service),
+):
+    try:
+        train = await train_service.get_train(train_id)
+        return await booking_service.get_seat_map(
+            train, journey_date, travel_class
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.put(

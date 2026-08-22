@@ -4,6 +4,7 @@ import {
   Menu,
   Route as RouteIcon,
   Search,
+  Ticket,
   TrainFront,
 } from "lucide-react";
 import { useState } from "react";
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { to: "/trains", label: "Trains", icon: TrainFront, end: false },
   { to: "/routes", label: "Routes", icon: RouteIcon, end: false },
   { to: "/analytics", label: "Analytics", icon: BarChart3, end: false },
+  { to: "/pnr-status", label: "PNR Status", icon: Ticket, end: false },
 ];
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -61,7 +63,7 @@ export function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-6">
         <Logo />
 
-        <nav className="hidden items-center gap-7 sm:flex">
+        <nav className="hidden items-center gap-4 lg:flex">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -74,9 +76,15 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 sm:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           {user ? (
             <>
+              <Link
+                to="/my-bookings"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                My Bookings
+              </Link>
               <span className="text-sm text-muted-foreground">
                 {user.full_name}
               </span>
@@ -100,7 +108,7 @@ export function Navbar() {
           <ThemeToggle />
         </div>
 
-        <div className="flex items-center gap-1 sm:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
           <ThemeToggle />
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
@@ -143,6 +151,14 @@ export function Navbar() {
                       {user.full_name}
                     </span>
                   </p>
+                  <Button asChild className="w-full">
+                    <Link
+                      to="/my-bookings"
+                      onClick={() => setIsSheetOpen(false)}
+                    >
+                      My Bookings
+                    </Link>
+                  </Button>
                   <Button
                     variant="outline"
                     className="w-full"

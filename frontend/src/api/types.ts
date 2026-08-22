@@ -129,3 +129,100 @@ export interface LoginResponse {
 export interface ApiError {
   detail: string;
 }
+
+export interface AvailabilityClass {
+  class_code: string;
+  class_name: string;
+  fare: string;
+  total_seats: number;
+  available_seats: number;
+  waitlist_count: number;
+  status_label: string;
+}
+
+export interface SeatInfo {
+  seat_number: number;
+  coach: string;
+  berth_type: string | null;
+  is_booked: boolean;
+}
+
+export interface CoachSeatMap {
+  coach: string;
+  seats: SeatInfo[];
+}
+
+export interface SeatMapResponse {
+  class_code: string;
+  class_name: string;
+  coaches: CoachSeatMap[];
+}
+
+export interface PassengerInput {
+  name: string;
+  age: number;
+  gender: "M" | "F" | "O";
+}
+
+export interface Passenger {
+  id: number;
+  name: string;
+  age: number;
+  gender: string;
+  status: "CONFIRMED" | "WAITLISTED" | "CANCELLED";
+  seat_number: number | null;
+  coach: string | null;
+  berth_type: string | null;
+}
+
+export type BookingStatus =
+  | "PENDING_PAYMENT"
+  | "CONFIRMED"
+  | "PARTIALLY_CONFIRMED"
+  | "WAITLISTED"
+  | "CANCELLED";
+
+export interface Booking {
+  id: number;
+  pnr: string;
+  status: BookingStatus;
+  travel_class: string;
+  class_name: string;
+  journey_date: string;
+  total_fare: string;
+  train_id: number;
+  train_number: string;
+  train_name: string;
+  source_station_id: number;
+  source_station_name: string;
+  source_station_code: string;
+  destination_station_id: number;
+  destination_station_name: string;
+  destination_station_code: string;
+  passengers: Passenger[];
+  is_paid: boolean;
+  created_at: string;
+}
+
+export interface BookingCreate {
+  train_id: number;
+  route_id: number;
+  source_station_id: number;
+  destination_station_id: number;
+  journey_date: string;
+  travel_class: string;
+  passengers: PassengerInput[];
+}
+
+export interface PaymentResult {
+  status: "SUCCESS" | "FAILED";
+  transaction_id: string | null;
+  message: string;
+  booking: Booking | null;
+}
+
+export interface CancelResult {
+  booking: Booking;
+  refund_amount: string;
+  cancellation_charge: string;
+}

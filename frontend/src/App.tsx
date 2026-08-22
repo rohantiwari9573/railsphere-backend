@@ -49,6 +49,25 @@ const RegisterPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import("./pages/NotFoundPage").then((m) => ({ default: m.NotFoundPage }))
 );
+const BookingPage = lazy(() =>
+  import("./pages/BookingPage").then((m) => ({ default: m.BookingPage }))
+);
+const PaymentPage = lazy(() =>
+  import("./pages/PaymentPage").then((m) => ({ default: m.PaymentPage }))
+);
+const TicketPage = lazy(() =>
+  import("./pages/TicketPage").then((m) => ({ default: m.TicketPage }))
+);
+const MyBookingsPage = lazy(() =>
+  import("./pages/MyBookingsPage").then((m) => ({
+    default: m.MyBookingsPage,
+  }))
+);
+const PnrStatusPage = lazy(() =>
+  import("./pages/PnrStatusPage").then((m) => ({
+    default: m.PnrStatusPage,
+  }))
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,6 +106,17 @@ function App() {
                       element={<RouteDetailPage />}
                     />
                     <Route path="/analytics" element={<AnalyticsPage />} />
+                    <Route
+                      path="/book/:trainId/:routeId"
+                      element={<BookingPage />}
+                    />
+                    <Route
+                      path="/payment/:bookingId"
+                      element={<PaymentPage />}
+                    />
+                    <Route path="/ticket/:bookingId" element={<TicketPage />} />
+                    <Route path="/my-bookings" element={<MyBookingsPage />} />
+                    <Route path="/pnr-status" element={<PnrStatusPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="*" element={<NotFoundPage />} />
