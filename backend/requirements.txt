@@ -19,7 +19,7 @@ email-validator==2.3.0
 
 slowapi==0.1.9
 redis==5.2.1
-arq==0.26.3
+arq==0.28.0
 prometheus-fastapi-instrumentator==7.1.0
 strawberry-graphql[fastapi]==0.324.0
 opentelemetry-sdk==1.44.0
