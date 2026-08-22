@@ -44,6 +44,23 @@ class Settings(BaseSettings):
     # nothing that touches an encrypted column can run at all.
     DATA_ENCRYPTION_KEY: str = ""
 
+    # SQLAlchemy connection pool, per engine instance. There's one engine
+    # per process -- 2 gunicorn workers + 1 arq worker in production --
+    # so the worst case is (DB_POOL_SIZE + DB_POOL_MAX_OVERFLOW) * 3
+    # connections. Defaults are deliberately small: the production
+    # instance is a t3.micro (1GB RAM) running Postgres natively
+    # alongside the app, and each Postgres connection has real memory
+    # overhead. 3 + 2 = 5 per engine, 15 total worst case, comfortably
+    # under Postgres's default max_connections=100.
+    DB_POOL_SIZE: int = 3
+    DB_POOL_MAX_OVERFLOW: int = 2
+    # Recycle connections periodically so a connection that's been idle
+    # long enough to be dropped by the server/a NAT/firewall in between
+    # isn't handed back out already-dead. pool_pre_ping also guards
+    # against this per-checkout, but recycling avoids paying that
+    # extra round-trip on every use.
+    DB_POOL_RECYCLE_SECONDS: int = 1800
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

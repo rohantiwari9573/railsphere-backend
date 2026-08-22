@@ -10,6 +10,9 @@ engine = create_async_engine(
     # alongside the app's logging config.
     echo=False,
     pool_pre_ping=True,
+    pool_size=settings.DB_POOL_SIZE,
+    max_overflow=settings.DB_POOL_MAX_OVERFLOW,
+    pool_recycle=settings.DB_POOL_RECYCLE_SECONDS,
 )
 
 AsyncSessionLocal = async_sessionmaker(
