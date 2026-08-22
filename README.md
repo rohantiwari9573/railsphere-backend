@@ -17,7 +17,7 @@ and a production deployment with monitoring, tracing, caching, and CI/CD.
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-cache-DC382D?style=flat-square&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=flat-square&logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/license-none%20yet-lightgrey?style=flat-square)
+[![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
 
 **[Live App](https://railsphere-frontend.vercel.app)** · **[API Docs (Swagger)](https://16-176-230-154.nip.io/docs)** · **[GraphQL Playground](https://16-176-230-154.nip.io/graphql)**
 
