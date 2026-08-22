@@ -18,6 +18,7 @@ from sqlalchemy import text
 from app.api.router import api_router
 from app.core.config import settings
 from app.graphql.schema import graphql_router
+from app.core.http_caching import HttpCachingMiddleware
 from app.core.logging_config import configure_logging
 from app.core.pg_listen import listen_for_analytics_refresh
 from app.core.rate_limit import limiter
@@ -59,6 +60,7 @@ app.add_middleware(SlowAPIMiddleware)
 # `curl` it) at that endpoint, nothing else to run.
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 configure_tracing(app)
+app.add_middleware(HttpCachingMiddleware)
 
 if settings.cors_origins_list:
     app.add_middleware(
