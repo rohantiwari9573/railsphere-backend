@@ -225,6 +225,7 @@ Served over HTTPS via a free nip.io wildcard domain + Let's Encrypt (`backend/de
 - [x] Field-level encryption at rest for `User.email` (Fernet + HMAC blind index for lookups)
 - [x] Dataset files (95MB) hosted on S3, private bucket, ready for CloudFront (pending AWS account verification)
 - [x] EC2 security group hardened: closed the direct gunicorn port (8000), documented the SSH tradeoff (see `backend/deploy/README.md`)
+- [x] Redis caching and the scheduled analytics-refresh worker are live in production (Upstash-hosted, `railsphere-worker.service` enabled on EC2)
 
 ---
 
