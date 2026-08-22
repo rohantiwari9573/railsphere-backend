@@ -144,28 +144,16 @@ flowchart TD
 ### Deployment topology
 
 ```mermaid
-flowchart LR
-    GH["GitHub Actions<br/>test + deploy"] -->|SSH, on push to main| EC2
-
-    subgraph Vercel["Vercel"]
-        FE["React frontend<br/>CDN-backed"]
-    end
-
-    subgraph EC2["AWS EC2 (Ubuntu, t3.micro)"]
-        Nginx["nginx<br/>reverse proxy + TLS"] --> App["gunicorn<br/>2x uvicorn workers"]
-        App --> DB[("PostgreSQL<br/>native, 127.0.0.1 only")]
-        Worker["arq worker<br/>scheduled analytics refresh"]
-    end
-
-    Redis[("Upstash Redis")]
-    S3[("S3<br/>dataset bucket")]
-    Obs["Jaeger + Prometheus<br/>+ Grafana"]
-
-    FE -->|REST + GraphQL + WS| Nginx
-    App <--> Redis
+flowchart TD
+    GH["GitHub Actions<br/>test + deploy"] -->|SSH, on push to main| Nginx
+    FE["React frontend<br/>Vercel, CDN-backed"] -->|REST + GraphQL + WS| Nginx["nginx<br/>reverse proxy + TLS, EC2"]
+    Nginx --> App["gunicorn<br/>2x uvicorn workers, EC2"]
+    App --> DB[("PostgreSQL<br/>native on EC2")]
+    App <--> Redis[("Redis<br/>Upstash")]
+    Worker["arq worker<br/>scheduled analytics refresh"] --> DB
     Worker <--> Redis
-    Worker --> DB
-    App -.traces / metrics.-> Obs
+    App -.traces / metrics.-> Obs["Jaeger + Prometheus<br/>+ Grafana"]
+    S3[("S3<br/>dataset bucket")]
 ```
 
 ---
