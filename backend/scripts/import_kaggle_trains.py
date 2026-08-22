@@ -1,14 +1,15 @@
 import asyncio
+import sys
 from pathlib import Path
+
+# Windows + psycopg async compatibility -- no-op on Linux (production).
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsSelectorEventLoopPolicy()
+    )
 
 from app.db.session import AsyncSessionLocal
 from app.importers.kaggle_train_importer import KaggleTrainImporter
-
-
-# Fix for Windows + Python 3.13 + psycopg async
-asyncio.set_event_loop_policy(
-    asyncio.WindowsSelectorEventLoopPolicy()
-)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATASET_DIR = BASE_DIR / "datasets"
