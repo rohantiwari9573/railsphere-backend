@@ -1,0 +1,14 @@
+[Unit]
+Description=RailSphere database backup (pg_dump -> gzip -> local disk)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/railsphere-backend/backend
+Environment=PATH=/home/ubuntu/railsphere-backend/backend/.venv/bin:/usr/bin
+ExecStart=/home/ubuntu/railsphere-backend/backend/.venv/bin/python scripts/backup_database.py
+StandardOutput=journal
+StandardError=journal

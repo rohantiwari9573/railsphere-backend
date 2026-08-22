@@ -30,14 +30,20 @@ services.
 
 - `railsphere.service` — the API (gunicorn + uvicorn workers)
 - `railsphere-worker.service` — the arq background worker (scheduled analytics refresh)
+- `railsphere-backup.service` + `railsphere-backup.timer` — daily `pg_dump` to
+  local disk (`backend/backups/`), 7-day retention. Local-disk only for now
+  (protects against a bad migration or accidental DELETE, not against
+  instance/EBS loss) -- see `scripts/backup_database.py` for the upgrade path
+  to off-instance (S3) backups.
 
-Both expect the repo at `/home/ubuntu/railsphere-backend/backend` with a `.venv`
+All expect the repo at `/home/ubuntu/railsphere-backend/backend` with a `.venv`
 already created there. Copy to `/etc/systemd/system/`, then:
 
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now railsphere
 sudo systemctl enable --now railsphere-worker   # only once REDIS_URL is set
+sudo systemctl enable --now railsphere-backup.timer
 ```
 
 ## CI/CD auto-deploy

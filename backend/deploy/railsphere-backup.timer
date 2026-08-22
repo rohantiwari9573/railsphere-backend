@@ -1,0 +1,13 @@
+[Unit]
+Description=Run railsphere-backup.service daily
+
+[Timer]
+# 03:00 UTC -- low-traffic hour, and clear of the arq worker's
+# :00/:30 analytics refresh (app/worker.py) so pg_dump isn't racing a
+# concurrent REFRESH MATERIALIZED VIEW CONCURRENTLY.
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
