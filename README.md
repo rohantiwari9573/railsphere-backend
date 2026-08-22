@@ -377,10 +377,10 @@ pytest -v
 
 <div align="center">
 
-**Rohan Tiwari**
-Final-year B.Tech student
+**Rohan Tiwari** — Aspiring SDE, Final Year B.Tech Student
 
-[![GitHub](https://img.shields.io/badge/GitHub-rohantiwari9573-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/rohantiwari9573)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Rohan_Tiwari-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/rohan-tiwari-012106283/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/rohantiwari9573)
+&nbsp;|&nbsp;
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/rohan-tiwari-012106283/)
 
 </div>
