@@ -185,6 +185,8 @@ export function AnalyticsPage() {
                   contentStyle={{
                     borderRadius: 8,
                     border: "1px solid var(--border)",
+                    backgroundColor: "var(--popover)",
+                    color: "var(--popover-foreground)",
                     fontSize: 12,
                   }}
                   formatter={(value) => [String(value), "Routes"]}
@@ -234,6 +236,8 @@ export function AnalyticsPage() {
                   contentStyle={{
                     borderRadius: 8,
                     border: "1px solid var(--border)",
+                    backgroundColor: "var(--popover)",
+                    color: "var(--popover-foreground)",
                     fontSize: 12,
                   }}
                   formatter={(value) => [String(value), "Stops"]}
@@ -279,6 +283,8 @@ export function AnalyticsPage() {
                   contentStyle={{
                     borderRadius: 8,
                     border: "1px solid var(--border)",
+                    backgroundColor: "var(--popover)",
+                    color: "var(--popover-foreground)",
                     fontSize: 12,
                   }}
                 />

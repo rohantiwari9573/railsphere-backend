@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import {
   Sheet,
   SheetContent,
@@ -96,15 +97,18 @@ export function Navbar() {
               </Button>
             </>
           )}
+          <ThemeToggle />
         </div>
 
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="sm:hidden">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-72">
+        <div className="flex items-center gap-1 sm:hidden">
+          <ThemeToggle />
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
             <SheetHeader>
               <SheetTitle>
                 <Logo />
@@ -166,8 +170,9 @@ export function Navbar() {
                 </div>
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

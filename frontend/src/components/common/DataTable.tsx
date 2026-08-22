@@ -44,12 +44,14 @@ export function DataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row) => (
+            {data.map((row, i) => (
               <TableRow
                 key={getRowKey(row)}
                 className={cn(
+                  "animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-300",
                   getRowHref && "cursor-pointer"
                 )}
+                style={{ animationDelay: `${Math.min(i * 25, 300)}ms` }}
                 onClick={() =>
                   getRowHref && navigate(getRowHref(row))
                 }

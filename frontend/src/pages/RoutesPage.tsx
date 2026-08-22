@@ -99,8 +99,14 @@ export function RoutesPage() {
               />
             </div>
             <div className="grid grid-cols-1 gap-3 sm:hidden">
-              {data.items.map((route) => (
-                <RouteCard key={route.id} route={route} />
+              {data.items.map((route, i) => (
+                <div
+                  key={route.id}
+                  className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-300"
+                  style={{ animationDelay: `${Math.min(i * 25, 300)}ms` }}
+                >
+                  <RouteCard route={route} />
+                </div>
               ))}
             </div>
           </>

@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { Layout } from "./components/layout/Layout";
 import { PageTransition } from "./components/layout/PageTransition";
 import { PageSpinner } from "./components/common/PageSpinner";
@@ -61,39 +62,41 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Layout>
-            <PageTransition>
-              <Suspense fallback={<PageSpinner />}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/search" element={<SearchResultsPage />} />
-                  <Route path="/stations" element={<StationsPage />} />
-                  <Route
-                    path="/stations/:id"
-                    element={<StationDetailPage />}
-                  />
-                  <Route path="/trains" element={<TrainsPage />} />
-                  <Route
-                    path="/trains/:id"
-                    element={<TrainDetailPage />}
-                  />
-                  <Route path="/routes" element={<RoutesPage />} />
-                  <Route
-                    path="/routes/:id"
-                    element={<RouteDetailPage />}
-                  />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
-              </Suspense>
-            </PageTransition>
-          </Layout>
-        </BrowserRouter>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Layout>
+              <PageTransition>
+                <Suspense fallback={<PageSpinner />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/search" element={<SearchResultsPage />} />
+                    <Route path="/stations" element={<StationsPage />} />
+                    <Route
+                      path="/stations/:id"
+                      element={<StationDetailPage />}
+                    />
+                    <Route path="/trains" element={<TrainsPage />} />
+                    <Route
+                      path="/trains/:id"
+                      element={<TrainDetailPage />}
+                    />
+                    <Route path="/routes" element={<RoutesPage />} />
+                    <Route
+                      path="/routes/:id"
+                      element={<RouteDetailPage />}
+                    />
+                    <Route path="/analytics" element={<AnalyticsPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </Suspense>
+              </PageTransition>
+            </Layout>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

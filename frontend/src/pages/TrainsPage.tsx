@@ -97,8 +97,14 @@ export function TrainsPage() {
               />
             </div>
             <div className="grid grid-cols-1 gap-3 sm:hidden">
-              {data.items.map((train) => (
-                <TrainCard key={train.id} train={train} />
+              {data.items.map((train, i) => (
+                <div
+                  key={train.id}
+                  className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-300"
+                  style={{ animationDelay: `${Math.min(i * 25, 300)}ms` }}
+                >
+                  <TrainCard train={train} />
+                </div>
               ))}
             </div>
           </>

@@ -94,8 +94,14 @@ export function StationsPage() {
               />
             </div>
             <div className="grid grid-cols-1 gap-3 sm:hidden">
-              {data.items.map((station) => (
-                <StationCard key={station.id} station={station} />
+              {data.items.map((station, i) => (
+                <div
+                  key={station.id}
+                  className="animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-300"
+                  style={{ animationDelay: `${Math.min(i * 25, 300)}ms` }}
+                >
+                  <StationCard station={station} />
+                </div>
               ))}
             </div>
           </>
