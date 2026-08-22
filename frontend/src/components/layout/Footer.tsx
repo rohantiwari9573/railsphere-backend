@@ -31,8 +31,8 @@ export function Footer() {
               <span className="font-bold text-foreground">RailSphere</span>
             </div>
             <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-              A railway data explorer built on a real dataset of ~9,000
-              stations, ~5,200 trains, and 416,000+ route-station records.
+              A railway data explorer built on a real dataset of ~9,800
+              stations, ~10,500 trains, and 516,000+ route-station records.
             </p>
           </div>
 

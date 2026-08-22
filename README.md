@@ -34,7 +34,7 @@ and a production deployment with monitoring, tracing, caching, and CI/CD.
 </tr>
 <tr>
 <td width="50%"><img src="docs/screenshots/analytics.jpg" alt="Network analytics dashboard" width="100%" /><p align="center"><sub>Network analytics, computed live from the database</sub></p></td>
-<td width="50%"><img src="docs/screenshots/stats.jpg" alt="Dataset stats" width="100%" /><p align="center"><sub>~9,000 stations, ~5,200 trains, 416,000+ route-station links</sub></p></td>
+<td width="50%"><img src="docs/screenshots/stats.jpg" alt="Dataset stats" width="100%" /><p align="center"><sub>Live dataset scale, pulled straight from the database</sub></p></td>
 </tr>
 </table>
 
@@ -60,7 +60,7 @@ and a production deployment with monitoring, tracing, caching, and CI/CD.
 
 RailSphere started as a backend exercise — model a real railway network in PostgreSQL and expose it over a clean API. It's since grown into a full platform: a React frontend, a working IRCTC-style ticket booking system with seat allocation and waitlisting, and a production deployment with the kind of observability and hardening you'd expect from a real service, not a class project.
 
-Everything queries a real, imported dataset — **~9,000 stations, ~5,200 trains, ~5,200 routes, 416,000+ route-station links** — no mock data, anywhere.
+Everything queries a real, imported dataset — **~9,800 stations, ~10,500 trains, ~10,500 routes, 516,000+ route-station links** — no mock data, anywhere.
 
 > I'm a final-year B.Tech student; this is my main portfolio project. It's deliberately over-engineered in places (partitioned tables, distributed tracing, a monitoring stack) because I wanted to actually practice the infrastructure, not just read about it.
 

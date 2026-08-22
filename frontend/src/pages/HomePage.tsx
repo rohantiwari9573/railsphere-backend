@@ -52,21 +52,21 @@ const EXPLORE_SECTIONS = [
     icon: MapPin,
     title: "Stations",
     description:
-      "Browse ~9,000 stations across every zone, searchable by name, code, or city.",
+      "Browse ~9,800 stations across every zone, searchable by name, code, or city.",
   },
   {
     to: "/trains",
     icon: TrainFront,
     title: "Trains",
     description:
-      "~5,200 trains — Express, Superfast, Rajdhani, Passenger, and more.",
+      "~10,500 trains — Express, Superfast, Rajdhani, Passenger, and more.",
   },
   {
     to: "/routes",
     icon: RouteIcon,
     title: "Routes",
     description:
-      "Full station-by-station sequences for ~5,200 routes, from 2-stop shuttles to the 689-stop Vivek Express.",
+      "Full station-by-station sequences for ~10,500 routes, from 2-stop shuttles to the 689-stop Vivek Express.",
   },
 ];
 
@@ -75,7 +75,7 @@ const FEATURES = [
     icon: Zap,
     title: "Live, real dataset",
     description:
-      "Every result comes from a real relational database, not mock data — ~9,000 stations, ~5,200 trains, 416,000+ route-station records.",
+      "Every result comes from a real relational database, not mock data — ~9,800 stations, ~10,500 trains, 516,000+ route-station records.",
   },
   {
     icon: Search,
