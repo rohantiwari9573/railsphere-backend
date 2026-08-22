@@ -22,6 +22,21 @@ function formatTime(value: string | null): string | null {
   return value.slice(0, 5);
 }
 
+/**
+ * The imported schedule data has no explicit "does the train actually
+ * stop here" flag (halt_minutes is 0 on every row in the dataset), but
+ * arrival/departure times reveal it indirectly: intermediate points the
+ * train just passes have identical arrival and departure times, while
+ * genuine commercial stops have a real gap between them.
+ */
+function isRealStoppage(stop: TimelineStop): boolean {
+  return (
+    stop.arrivalTime !== null &&
+    stop.departureTime !== null &&
+    stop.arrivalTime !== stop.departureTime
+  );
+}
+
 export function RouteTimeline({ stops, highlightStationIds = [] }: Props) {
   return (
     <ol className="relative">
@@ -30,6 +45,7 @@ export function RouteTimeline({ stops, highlightStationIds = [] }: Props) {
         const isLast = index === stops.length - 1;
         const isTerminus = isFirst || isLast;
         const isHighlighted = highlightStationIds.includes(stop.stationId);
+        const isStoppage = isTerminus || isRealStoppage(stop);
 
         return (
           <motion.li
@@ -61,17 +77,30 @@ export function RouteTimeline({ stops, highlightStationIds = [] }: Props) {
 
             <div className="flex min-w-0 flex-1 items-center justify-between gap-3 pt-0.5">
               <div className="min-w-0">
-                <Link
-                  to={`/stations/${stop.stationId}`}
-                  className={cn(
-                    "block truncate text-sm hover:text-primary hover:underline",
-                    isTerminus
-                      ? "font-semibold text-foreground"
-                      : "font-medium text-foreground/90"
+                <div className="flex items-center gap-1.5">
+                  {!isTerminus && (
+                    <span
+                      className={cn(
+                        "h-2 w-2 shrink-0 rounded-full",
+                        isStoppage
+                          ? "bg-emerald-500 dark:bg-emerald-400"
+                          : "bg-red-500 dark:bg-red-400"
+                      )}
+                      aria-hidden
+                    />
                   )}
-                >
-                  {stop.stationName}
-                </Link>
+                  <Link
+                    to={`/stations/${stop.stationId}`}
+                    className={cn(
+                      "block truncate text-sm hover:text-primary hover:underline",
+                      isTerminus
+                        ? "font-semibold text-foreground"
+                        : "font-medium text-foreground/90"
+                    )}
+                  >
+                    {stop.stationName}
+                  </Link>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {stop.stationCode}
                   {isFirst && " · Origin"}
@@ -80,11 +109,19 @@ export function RouteTimeline({ stops, highlightStationIds = [] }: Props) {
               </div>
 
               <div className="shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                {formatTime(stop.arrivalTime) && (
-                  <p>Arr {formatTime(stop.arrivalTime)}</p>
-                )}
-                {formatTime(stop.departureTime) && (
-                  <p>Dep {formatTime(stop.departureTime)}</p>
+                {isStoppage ? (
+                  <>
+                    {formatTime(stop.arrivalTime) && (
+                      <p>Arr {formatTime(stop.arrivalTime)}</p>
+                    )}
+                    {formatTime(stop.departureTime) && (
+                      <p>Dep {formatTime(stop.departureTime)}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="font-medium text-red-600 dark:text-red-400">
+                    No stoppage
+                  </p>
                 )}
               </div>
             </div>
