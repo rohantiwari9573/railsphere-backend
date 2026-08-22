@@ -1,11 +1,21 @@
 import { TrainFront } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const LINKS = [
-  { to: "/stations", label: "Stations" },
-  { to: "/trains", label: "Trains" },
-  { to: "/routes", label: "Routes" },
-  { to: "/analytics", label: "Analytics" },
+const EXPLORE_LINKS = [
+  { to: "/search", label: "Search trains" },
+  { to: "/pnr-status", label: "PNR status" },
+  { to: "/my-bookings", label: "My bookings" },
+];
+
+const PROJECT_LINKS = [
+  {
+    href: "https://github.com/rohantiwari9573/railsphere-backend",
+    label: "Source code",
+  },
+  {
+    href: `${import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000"}/docs`,
+    label: "API docs",
+  },
 ];
 
 export function Footer() {
@@ -26,22 +36,44 @@ export function Footer() {
             </p>
           </div>
 
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Explore
-            </p>
-            <ul className="mt-3 space-y-2">
-              {LINKS.map((link) => (
-                <li key={link.to}>
-                  <Link
-                    to={link.to}
-                    className="text-sm text-muted-foreground hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div className="flex gap-12">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Explore
+              </p>
+              <ul className="mt-3 space-y-2">
+                {EXPLORE_LINKS.map((link) => (
+                  <li key={link.to}>
+                    <Link
+                      to={link.to}
+                      className="text-sm text-muted-foreground hover:text-primary"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Project
+              </p>
+              <ul className="mt-3 space-y-2">
+                {PROJECT_LINKS.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-muted-foreground hover:text-primary"
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
