@@ -6,7 +6,7 @@
 
 **A full-stack Indian Railways platform — real data, real booking logic, real infrastructure.**
 
-Built solo, end to end: React frontend, FastAPI backend, a 400K+ row PostgreSQL dataset,
+Built solo, end to end: React frontend, FastAPI backend, a 500K+ row PostgreSQL dataset,
 and a production deployment with monitoring, tracing, caching, and CI/CD.
 
 [![CI](https://github.com/rohantiwari9573/railsphere-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/rohantiwari9573/railsphere-backend/actions/workflows/ci.yml)
