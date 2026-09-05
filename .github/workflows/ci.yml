@@ -35,7 +35,6 @@ jobs:
       SECRET_KEY: ci-only-secret-key-not-used-in-production
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
-      DATA_ENCRYPTION_KEY: "QWzRSaoCsTQMzyZxs3tgjSDdpNKD_tvhTLqZsDOpr_0="
 
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +46,11 @@ jobs:
       - name: Install dependencies
         working-directory: backend
         run: pip install -r requirements-dev.txt
+
+      - name: Generate ephemeral encryption key
+        # Fresh key per run -- tests only need a valid key, never a stable one.
+        run: |
+          echo "DATA_ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> "$GITHUB_ENV"
 
       - name: Run migrations
         working-directory: backend

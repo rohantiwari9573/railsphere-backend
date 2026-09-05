@@ -6,13 +6,15 @@ if platform.system() == "Windows":
 
 import os
 
+from cryptography.fernet import Fernet
+
 os.environ.setdefault(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:RoHaN999@localhost:5432/railsphere_test",
 )
 os.environ.setdefault(
     "DATA_ENCRYPTION_KEY",
-    "QWzRSaoCsTQMzyZxs3tgjSDdpNKD_tvhTLqZsDOpr_0=",
+    Fernet.generate_key().decode(),
 )
 
 import pytest

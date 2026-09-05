@@ -202,6 +202,7 @@ Brings up the API, Postgres, Redis, Jaeger, Prometheus, Grafana, and the backgro
 ```bash
 git clone https://github.com/rohantiwari9573/railsphere-backend.git
 cd railsphere-backend
+echo "DATA_ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" > .env
 docker compose up --build
 ```
 

@@ -81,9 +81,10 @@ services:
       CORS_ORIGINS: "http://localhost:5173"
       REDIS_URL: redis://redis:6379/0
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
-      # Dev-only key, fine to have in this file -- local Docker stack
-      # only, never used against real data.
-      DATA_ENCRYPTION_KEY: jdQ58IGCToIXjghOvUDZeGxmeAId5A9_E6K11bXzYUM=
+      # Read from a local, git-ignored .env file at the repo root (Compose
+      # loads it automatically). Generate one with:
+      # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?Set DATA_ENCRYPTION_KEY in a .env file at the repo root -- see docker-compose.yml}
     ports:
       - "8000:8000"
 
