@@ -179,10 +179,12 @@ async def get_current_user(
         if user_id is None:
             raise credentials_exception
 
+        user_id = int(user_id)
+
     except Exception:
         raise credentials_exception
 
-    user = await repository.get_by_id(int(user_id))
+    user = await repository.get_by_id(user_id)
 
     if user is None:
         raise credentials_exception
