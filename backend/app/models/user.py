@@ -50,6 +50,16 @@ class User(Base, TimestampMixin):
         nullable=False,
     )
 
+    # Gates the reference-data write endpoints (stations/trains/routes/
+    # route-stations -- see app/api/dependencies.require_admin). Not
+    # settable through any API; promote a user with
+    # scripts/promote_admin.py.
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
 
 @event.listens_for(User, "before_insert")
 @event.listens_for(User, "before_update")

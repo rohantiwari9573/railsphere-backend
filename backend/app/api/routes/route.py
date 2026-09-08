@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import get_route_service
+from app.api.dependencies import get_route_service, require_admin
+from app.models.user import User
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.route import RouteCreate, RouteResponse, RouteUpdate
 from app.services.route_service import RouteService
@@ -19,6 +20,7 @@ router = APIRouter(
 async def create_route(
     route: RouteCreate,
     service: RouteService = Depends(get_route_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.create_route(route)
@@ -72,6 +74,7 @@ async def update_route(
     route_id: int,
     route: RouteUpdate,
     service: RouteService = Depends(get_route_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.update_route(route_id, route)
@@ -89,6 +92,7 @@ async def update_route(
 async def delete_route(
     route_id: int,
     service: RouteService = Depends(get_route_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         await service.delete_route(route_id)

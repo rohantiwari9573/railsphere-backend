@@ -343,6 +343,7 @@ pytest -v
 <summary><strong>Security & observability</strong></summary>
 
 - [x] Field-level encryption at rest for `User.email` (Fernet + HMAC blind index for lookups)
+- [x] Reference-data writes (stations/trains/routes/route-stations) gated behind an admin flag, not just login
 - [x] Request-id tracing + per-IP rate limiting
 - [x] EC2 security group hardened: closed the direct gunicorn port, documented the SSH tradeoff
 - [x] OpenTelemetry distributed tracing (Jaeger), opt-in via `OTEL_EXPORTER_OTLP_ENDPOINT`

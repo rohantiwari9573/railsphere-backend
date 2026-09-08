@@ -3,11 +3,12 @@ from datetime import time
 from app.models.schedule import Schedule
 
 
-async def test_stations_list_is_paginated(client):
+async def test_stations_list_is_paginated(client, admin_headers):
     for i in range(5):
         await client.post(
             "/stations",
             json={"code": f"PG{i}", "name": f"Pagination Station {i}"},
+            headers=admin_headers,
         )
 
     response = await client.get("/stations?limit=2&skip=0")
@@ -20,12 +21,16 @@ async def test_stations_list_is_paginated(client):
     assert body["limit"] == 2
 
 
-async def test_stations_search_filters_by_name_or_code(client):
+async def test_stations_search_filters_by_name_or_code(client, admin_headers):
     await client.post(
-        "/stations", json={"code": "SRCH", "name": "Search Target"}
+        "/stations",
+        json={"code": "SRCH", "name": "Search Target"},
+        headers=admin_headers,
     )
     await client.post(
-        "/stations", json={"code": "OTHR", "name": "Unrelated"}
+        "/stations",
+        json={"code": "OTHR", "name": "Unrelated"},
+        headers=admin_headers,
     )
 
     response = await client.get("/stations?search=Search Target")
@@ -36,12 +41,16 @@ async def test_stations_search_filters_by_name_or_code(client):
     assert body["items"][0]["code"] == "SRCH"
 
 
-async def test_stations_search_ranks_closer_trigram_match_first(client):
+async def test_stations_search_ranks_closer_trigram_match_first(
+    client, admin_headers
+):
     # Both match "%kanpur%", but KANPUR CENTRAL is a near-exact
     # trigram match while the other only contains it as a substring
     # inside a much longer, unrelated name.
     await client.post(
-        "/stations", json={"code": "TKC1", "name": "KANPUR CENTRAL"}
+        "/stations",
+        json={"code": "TKC1", "name": "KANPUR CENTRAL"},
+        headers=admin_headers,
     )
     await client.post(
         "/stations",
@@ -49,6 +58,7 @@ async def test_stations_search_ranks_closer_trigram_match_first(client):
             "code": "TKC2",
             "name": "Zzzzz Yyyyy Xxxxx Kanpur Wwwww Vvvvv",
         },
+        headers=admin_headers,
     )
 
     response = await client.get("/stations?search=kanpur")
@@ -58,18 +68,25 @@ async def test_stations_search_ranks_closer_trigram_match_first(client):
     assert codes.index("TKC1") < codes.index("TKC2")
 
 
-async def test_journey_search_between_stations(client, db_session):
+async def test_journey_search_between_stations(
+    client, admin_headers, db_session
+):
     route = await client.post(
         "/routes",
         json={"route_code": "JSR-RTE", "route_name": "Journey Search Route"},
+        headers=admin_headers,
     )
     route_id = route.json()["id"]
 
     station_a = await client.post(
-        "/stations", json={"code": "JSA", "name": "Journey Station A"}
+        "/stations",
+        json={"code": "JSA", "name": "Journey Station A"},
+        headers=admin_headers,
     )
     station_b = await client.post(
-        "/stations", json={"code": "JSB", "name": "Journey Station B"}
+        "/stations",
+        json={"code": "JSB", "name": "Journey Station B"},
+        headers=admin_headers,
     )
     a_id = station_a.json()["id"]
     b_id = station_b.json()["id"]
@@ -82,6 +99,7 @@ async def test_journey_search_between_stations(client, db_session):
             "sequence_number": 1,
             "departure_time": "08:00:00",
         },
+        headers=admin_headers,
     )
     await client.post(
         "/route-stations",
@@ -91,6 +109,7 @@ async def test_journey_search_between_stations(client, db_session):
             "sequence_number": 2,
             "arrival_time": "10:00:00",
         },
+        headers=admin_headers,
     )
 
     train = await client.post(
@@ -100,6 +119,7 @@ async def test_journey_search_between_stations(client, db_session):
             "train_name": "Journey Search Train",
             "train_type": "Express",
         },
+        headers=admin_headers,
     )
     train_id = train.json()["id"]
 
@@ -133,9 +153,11 @@ async def test_journey_search_between_stations(client, db_session):
     assert reverse_response.json() == []
 
 
-async def test_journey_search_rejects_same_station(client):
+async def test_journey_search_rejects_same_station(client, admin_headers):
     station = await client.post(
-        "/stations", json={"code": "SAME", "name": "Same Station"}
+        "/stations",
+        json={"code": "SAME", "name": "Same Station"},
+        headers=admin_headers,
     )
     station_id = station.json()["id"]
 

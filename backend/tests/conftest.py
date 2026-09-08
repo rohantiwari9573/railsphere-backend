@@ -30,6 +30,7 @@ from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.db.session import get_db
 from app.main import app
+from app.models.user import User
 
 test_engine = create_async_engine(settings.DATABASE_URL)
 
@@ -80,6 +81,42 @@ async def client(db_session):
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def admin_headers(client, db_session):
+    """
+    Bearer token for a user promoted to admin, for exercising the
+    reference-data write endpoints (stations/trains/routes/route-
+    stations -- see app/api/dependencies.require_admin). There's no
+    API for the promotion step (by design -- see scripts/
+    promote_admin.py), so it's done directly on the test session,
+    which shares the same transaction/savepoint the app's overridden
+    get_db hands out.
+    """
+    register = await client.post(
+        "/auth/register",
+        json={
+            "full_name": "Admin Tester",
+            "email": "admin-tester@example.com",
+            "password": "TestPass123!",
+        },
+    )
+    user_id = register.json()["id"]
+
+    user = await db_session.get(User, user_id)
+    user.is_admin = True
+    await db_session.commit()
+
+    login = await client.post(
+        "/auth/login",
+        data={
+            "username": "admin-tester@example.com",
+            "password": "TestPass123!",
+        },
+    )
+    token = login.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest_asyncio.fixture

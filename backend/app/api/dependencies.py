@@ -6,6 +6,7 @@ from app.core.cache import Cache, get_redis_client
 from app.core.jwt import decode_access_token
 from app.db.session import get_db
 
+from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.repositories.station_repository import StationRepository
 from app.repositories.train_repository import TrainRepository
@@ -190,3 +191,19 @@ async def get_current_user(
         raise credentials_exception
 
     return user
+
+
+async def require_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Gates the reference-data write endpoints (stations/trains/routes/
+    route-stations) -- anyone can read them, only an admin can mutate
+    them. Promote a user with scripts/promote_admin.py.
+    """
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required.",
+        )
+    return current_user

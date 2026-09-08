@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import get_journey_service, get_station_service
+from app.api.dependencies import (
+    get_journey_service,
+    get_station_service,
+    require_admin,
+)
+from app.models.user import User
 from app.schemas.journey import StationRouteInfo, StationTrainInfo
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.station import (
@@ -25,6 +30,7 @@ router = APIRouter(
 async def create_station(
     station_data: StationCreate,
     service: StationService = Depends(get_station_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.create_station(station_data)
@@ -120,6 +126,7 @@ async def update_station(
     station_id: int,
     station_data: StationUpdate,
     service: StationService = Depends(get_station_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.update_station(
@@ -141,6 +148,7 @@ async def update_station(
 async def delete_station(
     station_id: int,
     service: StationService = Depends(get_station_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         await service.delete_station(station_id)

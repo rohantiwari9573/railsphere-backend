@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import get_route_station_service
+from app.api.dependencies import get_route_station_service, require_admin
+from app.models.user import User
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.route_station import (
     RouteStationCreate,
@@ -25,6 +26,7 @@ async def create_route_station(
     service: RouteStationService = Depends(
         get_route_station_service
     ),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.create_route_station(
@@ -100,6 +102,7 @@ async def update_route_station(
     service: RouteStationService = Depends(
         get_route_station_service
     ),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.update_route_station(
@@ -123,6 +126,7 @@ async def delete_route_station(
     service: RouteStationService = Depends(
         get_route_station_service
     ),
+    _admin: User = Depends(require_admin),
 ):
     try:
         await service.delete_route_station(

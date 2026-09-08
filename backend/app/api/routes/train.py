@@ -6,7 +6,9 @@ from app.api.dependencies import (
     get_booking_service,
     get_journey_service,
     get_train_service,
+    require_admin,
 )
+from app.models.user import User
 from app.schemas.booking import AvailabilityClass, SeatMapResponse
 from app.schemas.journey import TrainRouteInfo
 from app.schemas.pagination import PaginatedResponse
@@ -33,6 +35,7 @@ router = APIRouter(
 async def create_train(
     train_data: TrainCreate,
     service: TrainService = Depends(get_train_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.create_train(train_data)
@@ -160,6 +163,7 @@ async def update_train(
     train_id: int,
     train_data: TrainUpdate,
     service: TrainService = Depends(get_train_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         return await service.update_train(
@@ -181,6 +185,7 @@ async def update_train(
 async def delete_train(
     train_id: int,
     service: TrainService = Depends(get_train_service),
+    _admin: User = Depends(require_admin),
 ):
     try:
         await service.delete_train(train_id)

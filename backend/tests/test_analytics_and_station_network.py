@@ -4,11 +4,21 @@ from app.models.schedule import Schedule
 from app.repositories.analytics_repository import AnalyticsRepository
 
 
-async def test_analytics_overview_reflects_real_counts(client):
-    await client.post("/stations", json={"code": "AN1", "name": "Analytics One"})
-    await client.post("/stations", json={"code": "AN2", "name": "Analytics Two"})
+async def test_analytics_overview_reflects_real_counts(client, admin_headers):
+    await client.post(
+        "/stations",
+        json={"code": "AN1", "name": "Analytics One"},
+        headers=admin_headers,
+    )
+    await client.post(
+        "/stations",
+        json={"code": "AN2", "name": "Analytics Two"},
+        headers=admin_headers,
+    )
     route = await client.post(
-        "/routes", json={"route_code": "AN-RTE", "route_name": "Analytics Route"}
+        "/routes",
+        json={"route_code": "AN-RTE", "route_name": "Analytics Route"},
+        headers=admin_headers,
     )
     route_id = route.json()["id"]
 
@@ -21,15 +31,23 @@ async def test_analytics_overview_reflects_real_counts(client):
     assert isinstance(body["avg_stations_per_route"], float)
 
 
-async def test_top_stations_ranks_by_route_count(client, db_session):
+async def test_top_stations_ranks_by_route_count(
+    client, admin_headers, db_session
+):
     route_a = await client.post(
-        "/routes", json={"route_code": "TSA", "route_name": "Route A"}
+        "/routes",
+        json={"route_code": "TSA", "route_name": "Route A"},
+        headers=admin_headers,
     )
     route_b = await client.post(
-        "/routes", json={"route_code": "TSB", "route_name": "Route B"}
+        "/routes",
+        json={"route_code": "TSB", "route_name": "Route B"},
+        headers=admin_headers,
     )
     station = await client.post(
-        "/stations", json={"code": "POP", "name": "Popular Station"}
+        "/stations",
+        json={"code": "POP", "name": "Popular Station"},
+        headers=admin_headers,
     )
     station_id = station.json()["id"]
 
@@ -40,6 +58,7 @@ async def test_top_stations_ranks_by_route_count(client, db_session):
             "station_id": station_id,
             "sequence_number": 1,
         },
+        headers=admin_headers,
     )
     await client.post(
         "/route-stations",
@@ -48,6 +67,7 @@ async def test_top_stations_ranks_by_route_count(client, db_session):
             "station_id": station_id,
             "sequence_number": 1,
         },
+        headers=admin_headers,
     )
 
     # top-stations is served from a materialized view (see
@@ -65,12 +85,18 @@ async def test_top_stations_ranks_by_route_count(client, db_session):
     assert matching[0]["route_count"] == 2
 
 
-async def test_top_stations_is_stale_until_refreshed(client, db_session):
+async def test_top_stations_is_stale_until_refreshed(
+    client, admin_headers, db_session
+):
     route = await client.post(
-        "/routes", json={"route_code": "STL-RTE", "route_name": "Stale Route"}
+        "/routes",
+        json={"route_code": "STL-RTE", "route_name": "Stale Route"},
+        headers=admin_headers,
     )
     station = await client.post(
-        "/stations", json={"code": "STL", "name": "Stale Station"}
+        "/stations",
+        json={"code": "STL", "name": "Stale Station"},
+        headers=admin_headers,
     )
     station_id = station.json()["id"]
 
@@ -81,6 +107,7 @@ async def test_top_stations_is_stale_until_refreshed(client, db_session):
             "station_id": station_id,
             "sequence_number": 1,
         },
+        headers=admin_headers,
     )
 
     before = await client.get("/analytics/top-stations?limit=50")
@@ -94,15 +121,21 @@ async def test_top_stations_is_stale_until_refreshed(client, db_session):
     assert any(row["station_id"] == station_id for row in after.json())
 
 
-async def test_top_routes_ranks_by_stop_count(client, db_session):
+async def test_top_routes_ranks_by_stop_count(
+    client, admin_headers, db_session
+):
     route = await client.post(
-        "/routes", json={"route_code": "TRR", "route_name": "Top Route"}
+        "/routes",
+        json={"route_code": "TRR", "route_name": "Top Route"},
+        headers=admin_headers,
     )
     route_id = route.json()["id"]
 
     for i in range(3):
         station = await client.post(
-            "/stations", json={"code": f"TRR{i}", "name": f"Top Route Stop {i}"}
+            "/stations",
+            json={"code": f"TRR{i}", "name": f"Top Route Stop {i}"},
+            headers=admin_headers,
         )
         await client.post(
             "/route-stations",
@@ -111,6 +144,7 @@ async def test_top_routes_ranks_by_stop_count(client, db_session):
                 "station_id": station.json()["id"],
                 "sequence_number": i + 1,
             },
+            headers=admin_headers,
         )
 
     await AnalyticsRepository(db_session).refresh_views()
@@ -123,14 +157,18 @@ async def test_top_routes_ranks_by_stop_count(client, db_session):
     assert matching[0]["stop_count"] == 3
 
 
-async def test_station_routes_and_trains(client, db_session):
+async def test_station_routes_and_trains(client, admin_headers, db_session):
     route = await client.post(
-        "/routes", json={"route_code": "SRT-RTE", "route_name": "Station Route"}
+        "/routes",
+        json={"route_code": "SRT-RTE", "route_name": "Station Route"},
+        headers=admin_headers,
     )
     route_id = route.json()["id"]
 
     station = await client.post(
-        "/stations", json={"code": "SRT", "name": "Station Route Target"}
+        "/stations",
+        json={"code": "SRT", "name": "Station Route Target"},
+        headers=admin_headers,
     )
     station_id = station.json()["id"]
 
@@ -142,6 +180,7 @@ async def test_station_routes_and_trains(client, db_session):
             "sequence_number": 1,
             "departure_time": "09:00:00",
         },
+        headers=admin_headers,
     )
 
     routes_response = await client.get(f"/stations/{station_id}/routes")
@@ -156,6 +195,7 @@ async def test_station_routes_and_trains(client, db_session):
             "train_name": "Station Route Train",
             "train_type": "Express",
         },
+        headers=admin_headers,
     )
     train_id = train.json()["id"]
 
@@ -180,9 +220,11 @@ async def test_station_routes_404_for_missing_station(client):
     assert response.status_code == 404
 
 
-async def test_train_routes(client, db_session):
+async def test_train_routes(client, admin_headers, db_session):
     route = await client.post(
-        "/routes", json={"route_code": "TRT-RTE", "route_name": "Train Route"}
+        "/routes",
+        json={"route_code": "TRT-RTE", "route_name": "Train Route"},
+        headers=admin_headers,
     )
     route_id = route.json()["id"]
 
@@ -193,6 +235,7 @@ async def test_train_routes(client, db_session):
             "train_name": "Train Route Train",
             "train_type": "Express",
         },
+        headers=admin_headers,
     )
     train_id = train.json()["id"]
 

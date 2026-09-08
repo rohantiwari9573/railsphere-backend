@@ -9,7 +9,7 @@ FUTURE_DATE = (date.today() + timedelta(days=10)).isoformat()
 
 
 @pytest.fixture
-async def booking_fixture(client):
+async def booking_fixture(client, admin_headers):
     register = await client.post(
         "/auth/register",
         json={
@@ -35,20 +35,26 @@ async def booking_fixture(client):
             "train_type": "Exp",
             "distance_km": 500,
         },
+        headers=admin_headers,
     )
     train_id = train.json()["id"]
 
     route = await client.post(
         "/routes",
         json={"route_code": "BK-RTE", "route_name": "Booking Test Route"},
+        headers=admin_headers,
     )
     route_id = route.json()["id"]
 
     source = await client.post(
-        "/stations", json={"code": "BKSRC", "name": "Source Station"}
+        "/stations",
+        json={"code": "BKSRC", "name": "Source Station"},
+        headers=admin_headers,
     )
     destination = await client.post(
-        "/stations", json={"code": "BKDST", "name": "Destination Station"}
+        "/stations",
+        json={"code": "BKDST", "name": "Destination Station"},
+        headers=admin_headers,
     )
     source_id = source.json()["id"]
     destination_id = destination.json()["id"]
@@ -61,6 +67,7 @@ async def booking_fixture(client):
             "sequence_number": 1,
             "distance_from_source": "0.00",
         },
+        headers=admin_headers,
     )
     await client.post(
         "/route-stations",
@@ -70,6 +77,7 @@ async def booking_fixture(client):
             "sequence_number": 2,
             "distance_from_source": "500.00",
         },
+        headers=admin_headers,
     )
 
     return {
@@ -228,7 +236,7 @@ async def test_list_my_bookings(client, booking_fixture):
 
 
 async def test_cancel_promotes_waitlisted_passenger(
-    client, db_session, booking_fixture
+    client, db_session, admin_headers, booking_fixture
 ):
     """
     Fills 1A (capacity 24 on a Rajdhani-type train) to capacity via
@@ -245,6 +253,7 @@ async def test_cancel_promotes_waitlisted_passenger(
             "train_type": "Raj",
             "distance_km": 500,
         },
+        headers=admin_headers,
     )
     train_id = raj_train.json()["id"]
 

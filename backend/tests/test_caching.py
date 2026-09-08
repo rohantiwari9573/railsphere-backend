@@ -3,10 +3,12 @@ from app.models.train import Train
 
 
 async def test_station_get_is_cached_until_update_invalidates(
-    cached_client, db_session
+    cached_client, admin_headers, db_session
 ):
     created = await cached_client.post(
-        "/stations", json={"code": "CACH", "name": "Cache Original"}
+        "/stations",
+        json={"code": "CACH", "name": "Cache Original"},
+        headers=admin_headers,
     )
     station_id = created.json()["id"]
 
@@ -25,7 +27,9 @@ async def test_station_get_is_cached_until_update_invalidates(
 
     # A real update goes through the service, which invalidates.
     await cached_client.put(
-        f"/stations/{station_id}", json={"name": "Cache Updated"}
+        f"/stations/{station_id}",
+        json={"name": "Cache Updated"},
+        headers=admin_headers,
     )
 
     third = await cached_client.get(f"/stations/{station_id}")
@@ -33,22 +37,26 @@ async def test_station_get_is_cached_until_update_invalidates(
 
 
 async def test_station_get_cache_is_invalidated_on_delete(
-    cached_client, fake_redis
+    cached_client, admin_headers, fake_redis
 ):
     created = await cached_client.post(
-        "/stations", json={"code": "CACHD", "name": "To Delete"}
+        "/stations",
+        json={"code": "CACHD", "name": "To Delete"},
+        headers=admin_headers,
     )
     station_id = created.json()["id"]
 
     await cached_client.get(f"/stations/{station_id}")
     assert await fake_redis.get(f"station:{station_id}") is not None
 
-    await cached_client.delete(f"/stations/{station_id}")
+    await cached_client.delete(
+        f"/stations/{station_id}", headers=admin_headers
+    )
     assert await fake_redis.get(f"station:{station_id}") is None
 
 
 async def test_train_get_is_cached_until_update_invalidates(
-    cached_client, db_session
+    cached_client, admin_headers, db_session
 ):
     created = await cached_client.post(
         "/trains",
@@ -57,6 +65,7 @@ async def test_train_get_is_cached_until_update_invalidates(
             "train_name": "Cache Train",
             "train_type": "Express",
         },
+        headers=admin_headers,
     )
     train_id = created.json()["id"]
 
@@ -71,7 +80,9 @@ async def test_train_get_is_cached_until_update_invalidates(
     assert second.json()["train_name"] == "Cache Train"
 
     await cached_client.put(
-        f"/trains/{train_id}", json={"train_name": "Cache Train Updated"}
+        f"/trains/{train_id}",
+        json={"train_name": "Cache Train Updated"},
+        headers=admin_headers,
     )
 
     third = await cached_client.get(f"/trains/{train_id}")

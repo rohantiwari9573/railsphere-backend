@@ -8,9 +8,11 @@ async def _gql(client, query: str, variables: dict | None = None):
     return body["data"]
 
 
-async def test_station_query_returns_created_station(client):
+async def test_station_query_returns_created_station(client, admin_headers):
     created = await client.post(
-        "/stations", json={"code": "GQL1", "name": "GraphQL Junction"}
+        "/stations",
+        json={"code": "GQL1", "name": "GraphQL Junction"},
+        headers=admin_headers,
     )
     station_id = created.json()["id"]
 
@@ -35,12 +37,16 @@ async def test_station_query_returns_null_for_missing_id(client):
     assert data["station"] is None
 
 
-async def test_stations_query_search_filters_results(client):
+async def test_stations_query_search_filters_results(client, admin_headers):
     await client.post(
-        "/stations", json={"code": "GQL2", "name": "Search Target Halt"}
+        "/stations",
+        json={"code": "GQL2", "name": "Search Target Halt"},
+        headers=admin_headers,
     )
     await client.post(
-        "/stations", json={"code": "GQL3", "name": "Unrelated Stop"}
+        "/stations",
+        json={"code": "GQL3", "name": "Unrelated Stop"},
+        headers=admin_headers,
     )
 
     data = await _gql(
@@ -53,7 +59,7 @@ async def test_stations_query_search_filters_results(client):
     assert "GQL3" not in codes
 
 
-async def test_train_query_returns_created_train(client):
+async def test_train_query_returns_created_train(client, admin_headers):
     created = await client.post(
         "/trains",
         json={
@@ -61,6 +67,7 @@ async def test_train_query_returns_created_train(client):
             "train_name": "GraphQL Express",
             "train_type": "Express",
         },
+        headers=admin_headers,
     )
     train_id = created.json()["id"]
 
@@ -74,10 +81,11 @@ async def test_train_query_returns_created_train(client):
     assert data["train"]["trainName"] == "GraphQL Express"
 
 
-async def test_route_query_returns_created_route(client):
+async def test_route_query_returns_created_route(client, admin_headers):
     created = await client.post(
         "/routes",
         json={"route_code": "GQR1", "route_name": "GraphQL Route"},
+        headers=admin_headers,
     )
     route_id = created.json()["id"]
 

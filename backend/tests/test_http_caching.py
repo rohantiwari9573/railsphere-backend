@@ -32,11 +32,14 @@ async def test_analytics_uses_longer_max_age(client):
     assert response.headers.get("cache-control") == "public, max-age=300"
 
 
-async def test_mutating_requests_are_not_cached(client):
+async def test_mutating_requests_are_not_cached(client, admin_headers):
     created = await client.post(
-        "/stations", json={"code": "HTCH", "name": "HTTP Cache Test"}
+        "/stations",
+        json={"code": "HTCH", "name": "HTTP Cache Test"},
+        headers=admin_headers,
     )
 
+    assert created.status_code == 201
     assert created.headers.get("cache-control") is None
     assert created.headers.get("etag") is None
 
