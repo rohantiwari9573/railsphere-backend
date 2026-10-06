@@ -12,6 +12,7 @@ from app.schemas.booking import (
     CancelResponse,
     PaymentRequest,
     PaymentResponse,
+    UpiIntentResponse,
 )
 from app.services.booking_service import BookingService
 from app.services.train_service import TrainService
@@ -113,6 +114,32 @@ async def pay_for_booking(
         )
     try:
         return await booking_service.pay(booking, data)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    "/{booking_id}/upi-intent",
+    response_model=UpiIntentResponse,
+)
+async def create_upi_intent(
+    booking_id: int,
+    current_user: User = Depends(get_current_user),
+    booking_service: BookingService = Depends(get_booking_service),
+):
+    booking = await booking_service.get_by_id_for_user(
+        booking_id, current_user.id
+    )
+    if booking is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Booking not found.",
+        )
+    try:
+        return booking_service.build_upi_intent(booking)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

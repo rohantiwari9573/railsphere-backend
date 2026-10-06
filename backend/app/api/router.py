@@ -15,6 +15,7 @@ from app.api.routes.analytics import (
     router as analytics_router,
 )
 from app.api.routes.booking import router as booking_router
+from app.api.routes.ticket import router as ticket_router
 from app.api.routes.ws import router as ws_router
 
 api_router = APIRouter()
@@ -28,4 +29,5 @@ api_router.include_router(route_station_router)
 api_router.include_router(journey_router)
 api_router.include_router(analytics_router)
 api_router.include_router(booking_router)
+api_router.include_router(ticket_router)
 api_router.include_router(ws_router)

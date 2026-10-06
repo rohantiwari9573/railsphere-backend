@@ -60,7 +60,25 @@ class BookingResponse(BaseModel):
     destination_station_code: str
     passengers: list[PassengerResponse]
     is_paid: bool
+    qr_payload: str
+    checked_in_at: datetime | None
     created_at: datetime
+
+
+class UpiIntentResponse(BaseModel):
+    upi_uri: str
+    amount: Decimal
+    transaction_reference: str
+
+
+class TicketVerifyRequest(BaseModel):
+    token: str
+
+
+class TicketVerifyResponse(BaseModel):
+    valid: bool
+    reason: str
+    booking: BookingResponse | None = None
 
 
 class AvailabilityClass(BaseModel):

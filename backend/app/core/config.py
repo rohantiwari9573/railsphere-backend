@@ -44,6 +44,14 @@ class Settings(BaseSettings):
     # nothing that touches an encrypted column can run at all.
     DATA_ENCRYPTION_KEY: str = ""
 
+    # UPI payee for dynamic payment QR codes. Left empty, the UPI QR
+    # endpoint refuses to issue codes. Set only to a VPA whose payments
+    # are actually reconciled -- nothing in this app verifies incoming
+    # UPI settlements yet, so a live VPA here would take real money
+    # the booking is never marked paid for.
+    UPI_PAYEE_VPA: str = ""
+    UPI_PAYEE_NAME: str = "RailSphere"
+
     # SQLAlchemy connection pool, per engine instance. There's one engine
     # per process -- 2 gunicorn workers + 1 arq worker in production --
     # so the worst case is (DB_POOL_SIZE + DB_POOL_MAX_OVERFLOW) * 3

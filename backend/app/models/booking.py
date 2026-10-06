@@ -77,6 +77,10 @@ class Booking(Base, TimestampMixin):
         DateTime(timezone=True), nullable=True
     )
 
+    checked_in_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     user: Mapped["User"] = relationship()
     train: Mapped["Train"] = relationship()
     source_station: Mapped["Station"] = relationship(

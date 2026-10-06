@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CreditCard, Landmark, Smartphone } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { getBooking, payForBooking } from "@/api/bookings";
+import { createUpiIntent, getBooking, payForBooking } from "@/api/bookings";
 import { BookingStatusBadge } from "@/components/common/Badges";
 import { DetailSkeleton } from "@/components/common/LoadingSkeleton";
 import { ErrorState } from "@/components/common/ErrorState";
@@ -31,6 +32,14 @@ export function PaymentPage() {
     queryKey: ["booking", bookingIdNum],
     queryFn: () => getBooking(bookingIdNum),
     enabled: Boolean(bookingIdNum),
+  });
+
+  const upiQuery = useQuery({
+    queryKey: ["upi-intent", bookingIdNum],
+    queryFn: () => createUpiIntent(bookingIdNum),
+    enabled: Boolean(booking) && method === "UPI" && !booking?.is_paid,
+    gcTime: 0,
+    retry: false,
   });
 
   const payMutation = useMutation({
@@ -130,6 +139,35 @@ export function PaymentPage() {
           ))}
         </div>
       </div>
+
+      {method === "UPI" && !booking.is_paid && (
+        <div className="mt-5 flex flex-col items-center rounded-xl border border-border bg-card p-5">
+          {upiQuery.isError ? (
+            <p className="text-sm text-muted-foreground">
+              UPI QR isn't available right now. Try another method.
+            </p>
+          ) : upiQuery.data ? (
+            <>
+              <QRCodeCanvas
+                value={upiQuery.data.upi_uri}
+                size={180}
+                includeMargin
+                className="rounded-lg"
+              />
+              <p className="mt-3 text-sm font-medium text-foreground">
+                Scan to pay ₹{upiQuery.data.amount}
+              </p>
+              <p className="mt-1 text-center text-xs text-muted-foreground">
+                Reference {upiQuery.data.transaction_reference}. This demo does
+                not confirm UPI transfers; use the Pay button to complete the
+                booking.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Generating QR…</p>
+          )}
+        </div>
+      )}
 
       <Button
         size="lg"

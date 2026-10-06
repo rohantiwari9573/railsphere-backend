@@ -6,6 +6,7 @@ import type {
   CancelResult,
   PaymentResult,
   SeatMapResponse,
+  UpiIntent,
 } from "./types";
 
 export async function getAvailability(
@@ -60,6 +61,13 @@ export async function payForBooking(
   const response = await apiClient.post<PaymentResult>(
     `/bookings/${bookingId}/pay`,
     { method }
+  );
+  return response.data;
+}
+
+export async function createUpiIntent(bookingId: number): Promise<UpiIntent> {
+  const response = await apiClient.post<UpiIntent>(
+    `/bookings/${bookingId}/upi-intent`
   );
   return response.data;
 }

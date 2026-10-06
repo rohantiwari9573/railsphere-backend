@@ -3,13 +3,16 @@ import secrets
 import string
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from urllib.parse import urlencode
 
+from app.core.config import settings
 from app.core.rail_classes import (
     CLASSES,
     allowed_classes_for,
     compute_fare_per_passenger,
     compute_seat_allocation,
 )
+from app.core.ticket_signing import parse_ticket, sign_ticket
 from app.models.booking import Booking, Passenger, Payment
 from app.models.train import Train
 from app.repositories.booking_repository import BookingRepository
@@ -24,6 +27,8 @@ from app.schemas.booking import (
     PaymentResponse,
     SeatInfo,
     SeatMapResponse,
+    TicketVerifyResponse,
+    UpiIntentResponse,
 )
 
 MAX_ADVANCE_BOOKING_DAYS = 120
@@ -240,6 +245,93 @@ class BookingService:
             booking=self._to_response(refreshed),
         )
 
+    def build_upi_intent(self, booking: Booking) -> UpiIntentResponse:
+        if not settings.UPI_PAYEE_VPA:
+            raise ValueError("UPI payments are not configured on this server.")
+        if booking.status == "CANCELLED":
+            raise ValueError("This booking has been cancelled.")
+        if booking.payment is not None:
+            raise ValueError("This booking has already been paid for.")
+
+        # Fresh reference per request: each QR is bound to this booking's
+        # exact amount and a one-off reference, so a screenshot of an old
+        # code can't be reused against a different booking or amount.
+        reference = f"RS{booking.pnr}{secrets.token_hex(3).upper()}"
+        query = urlencode(
+            {
+                "pa": settings.UPI_PAYEE_VPA,
+                "pn": settings.UPI_PAYEE_NAME,
+                "am": f"{booking.total_fare:.2f}",
+                "cu": "INR",
+                "tn": f"RailSphere PNR {booking.pnr}",
+                "tr": reference,
+            }
+        )
+        return UpiIntentResponse(
+            upi_uri=f"upi://pay?{query}",
+            amount=booking.total_fare,
+            transaction_reference=reference,
+        )
+
+    # ---------------- Ticket verification ----------------
+
+    async def verify_and_check_in(
+        self, token: str, today: date
+    ) -> TicketVerifyResponse:
+        pnr = parse_ticket(token)
+        if pnr is None:
+            return TicketVerifyResponse(
+                valid=False, reason="Not a valid RailSphere ticket."
+            )
+
+        booking = await self.repository.get_by_pnr(pnr)
+        if booking is None:
+            return TicketVerifyResponse(
+                valid=False, reason="No booking found for this ticket."
+            )
+
+        def reject(reason: str) -> TicketVerifyResponse:
+            return TicketVerifyResponse(
+                valid=False,
+                reason=reason,
+                booking=self._to_response(booking),
+            )
+
+        if booking.status == "CANCELLED":
+            return reject("This booking has been cancelled.")
+        if booking.payment is None or booking.payment.status != "SUCCESS":
+            return reject("This ticket has not been paid for.")
+        if booking.journey_date != today:
+            return reject(
+                f"This ticket is for {booking.journey_date}, not today."
+            )
+        if booking.checked_in_at is not None:
+            return reject(
+                "This ticket was already checked in at "
+                f"{booking.checked_in_at.isoformat()}."
+            )
+
+        confirmed = [p for p in booking.passengers if p.status == "CONFIRMED"]
+        if not confirmed:
+            return reject("No confirmed seats on this booking.")
+
+        booking.checked_in_at = datetime.now(UTC)
+        await self.repository.save()
+
+        waitlisted = len(booking.passengers) - len(confirmed)
+        reason = "Checked in."
+        if waitlisted:
+            reason += (
+                f" {waitlisted} waitlisted passenger(s) not confirmed "
+                "and not boarded."
+            )
+        refreshed = await self.repository.get_by_id(booking.id)
+        return TicketVerifyResponse(
+            valid=True,
+            reason=reason,
+            booking=self._to_response(refreshed),
+        )
+
     # ---------------- Cancellation ----------------
 
     async def cancel(self, booking: Booking) -> CancelResponse:
@@ -431,5 +523,7 @@ class BookingService:
             is_paid=(
                 booking.payment is not None and booking.payment.status == "SUCCESS"
             ),
+            qr_payload=sign_ticket(booking.pnr),
+            checked_in_at=booking.checked_in_at,
             created_at=booking.created_at,
         )

@@ -66,7 +66,7 @@ export const BookingDetailCard = forwardRef<
         </div>
         <QRCodeCanvas
           ref={qrRef}
-          value={`RailSphere PNR ${booking.pnr} | ${booking.train_number} | ${booking.journey_date}`}
+          value={booking.qr_payload}
           size={72}
           className="shrink-0 rounded-lg border border-border p-1.5"
         />

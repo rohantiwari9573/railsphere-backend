@@ -201,7 +201,15 @@ export interface Booking {
   destination_station_code: string;
   passengers: Passenger[];
   is_paid: boolean;
+  qr_payload: string;
+  checked_in_at: string | null;
   created_at: string;
+}
+
+export interface UpiIntent {
+  upi_uri: string;
+  amount: string;
+  transaction_reference: string;
 }
 
 export interface BookingCreate {
