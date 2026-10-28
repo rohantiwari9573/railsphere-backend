@@ -7,7 +7,7 @@
 **A full-stack Indian Railways platform — real data, real booking logic, real infrastructure.**
 
 Built solo, end to end: React frontend, FastAPI backend, a 500K+ row PostgreSQL dataset,
-and a production deployment with monitoring, tracing, caching, and CI/CD.
+with monitoring, tracing, caching and CI/CD built in, deployed live.
 
 [![CI](https://github.com/rohantiwari9573/railsphere-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/rohantiwari9573/railsphere-backend/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.13-3776AB?style=flat-square&logo=python&logoColor=white)
@@ -19,7 +19,9 @@ and a production deployment with monitoring, tracing, caching, and CI/CD.
 ![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 [![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
 
-**[Live App](https://railsphere-frontend.vercel.app)** · **[API Docs (Swagger)](https://16-176-230-154.nip.io/docs)** · **[GraphQL Playground](https://16-176-230-154.nip.io/graphql)**
+**[Live App](https://railsphere-frontend.vercel.app)** · **[API Docs (Swagger)](https://railsphere-api.onrender.com/docs)** · **[GraphQL Playground](https://railsphere-api.onrender.com/graphql)**
+
+<sub>The API runs on a free tier, so the first request after an idle period can take up to a minute while it wakes up.</sub>
 
 </div>
 
@@ -78,10 +80,10 @@ Everything queries a real, imported dataset — **~9,800 stations, ~10,500 train
 | 🔌 **WebSocket live updates** | Analytics push live over `/ws/analytics` when the underlying materialized views refresh |
 | 🧵 **GraphQL alongside REST** | A read-only GraphQL API (Strawberry) runs next to the REST API for the same data |
 | 🌗 **Dark / light theme** | Full theme system with no flash-of-wrong-theme on load |
-| 🔐 **Security-conscious by default** | JWT auth, Argon2 password hashing, field-level encryption at rest for PII (Fernet + HMAC blind index), per-IP rate limiting, hardened EC2 security group |
+| 🔐 **Security-conscious by default** | JWT auth, Argon2 password hashing, field-level encryption at rest for PII (Fernet + HMAC blind index), per-IP rate limiting, database never exposed publicly |
 | 📈 **Real observability** | OpenTelemetry distributed tracing (Jaeger), Prometheus metrics, and a provisioned-as-code Grafana dashboard — not bolted on, wired into every request |
 | ⚡ **Performance work that's actually measured** | Redis cache-aside layer with a circuit breaker, gzip compression, HTTP caching (`ETag`/`Cache-Control`), a 415k-row table hash-partitioned across 8 partitions, load-tested with Locust |
-| 🚀 **Real CI/CD** | Every push runs the test suite against a live Postgres container, then deploys over SSH and runs migrations automatically |
+| 🚀 **Real CI/CD** | Every push runs the test suite against a live Postgres container; the API redeploys automatically and applies migrations on boot |
 
 ---
 
@@ -106,9 +108,9 @@ Everything queries a real, imported dataset — **~9,800 stations, ~10,500 train
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL_16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker_Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
-![AWS EC2](https://img.shields.io/badge/AWS_EC2-FF9900?style=flat-square&logo=amazonaws&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=black)
+![Neon](https://img.shields.io/badge/Neon_Postgres-00E599?style=flat-square&logo=postgresql&logoColor=black)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
-![Nginx](https://img.shields.io/badge/nginx-009639?style=flat-square&logo=nginx&logoColor=white)
 
 **Observability**
 ![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-425CC7?style=flat-square&logo=opentelemetry&logoColor=white)
@@ -145,15 +147,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    GH["GitHub Actions<br/>test + deploy"] -->|SSH, on push to main| Nginx
-    FE["React frontend<br/>Vercel, CDN-backed"] -->|REST + GraphQL + WS| Nginx["nginx<br/>reverse proxy + TLS, EC2"]
-    Nginx --> App["gunicorn<br/>2x uvicorn workers, EC2"]
-    App --> DB[("PostgreSQL<br/>native on EC2")]
-    App <--> Redis[("Redis<br/>Upstash")]
-    Worker["arq worker<br/>scheduled analytics refresh"] --> DB
-    Worker <--> Redis
-    App -.traces / metrics.-> Obs["Jaeger + Prometheus<br/>+ Grafana"]
-    S3[("S3<br/>dataset bucket")]
+    Repo["GitHub (main)"] -->|auto-deploy| FE
+    Repo -->|auto-deploy| App
+    Repo --> GH["GitHub Actions<br/>tests only"]
+    FE["React frontend<br/>Vercel, CDN-backed"] -->|REST + GraphQL + WS| App["FastAPI on gunicorn<br/>Render (Docker)"]
+    App --> DB[("PostgreSQL<br/>Neon")]
+    App -.->|optional| Redis[("Redis<br/>cache-aside")]
+    App -.traces / metrics.-> Obs["Jaeger + Prometheus + Grafana<br/>(Docker Compose)"]
 ```
 
 ---
@@ -182,7 +182,7 @@ RailSphere/
 │   │   ├── repositories/          # DB access layer
 │   │   ├── schemas/                # Pydantic request/response models
 │   │   └── services/               # business logic layer
-│   ├── deploy/                  # systemd units + nginx config used on EC2
+│   ├── deploy/                  # systemd/nginx configs for a self-hosted VM deployment
 │   ├── loadtest/                # Locust load-test scenarios
 │   ├── scripts/                 # backup + per-dataset import entry points
 │   ├── tests/                   # pytest suite (72 tests)
@@ -277,25 +277,24 @@ pytest -v
 
 ## Deployment
 
-**Backend** — a single AWS EC2 instance (Ubuntu, t3.micro):
+| Component | Host |
+|---|---|
+| **Frontend** | Vercel, CDN-backed, auto-deployed on push |
+| **API** | Render web service built from `backend/Dockerfile`: gunicorn with 2 uvicorn workers. `alembic upgrade head` runs on every boot via `docker-entrypoint.sh` |
+| **Database** | Neon serverless PostgreSQL holding the full imported dataset (direct connection, since the app uses `LISTEN/NOTIFY`) |
+| **Cache** | Redis cache-aside is optional. The app fails open with a circuit breaker when `REDIS_URL` is unset |
 
-- **App**: `backend/deploy/railsphere.service` — a systemd unit running `gunicorn` with 2 `uvicorn.workers.UvicornWorker` processes, bound to `127.0.0.1:8000`
-- **Reverse proxy**: `backend/deploy/nginx.conf` — nginx handling TLS (via a free nip.io wildcard domain + Let's Encrypt), gzip compression, and `X-Forwarded-*` headers
-- **Database**: PostgreSQL running natively on the same instance, bound to `127.0.0.1` only — never exposed to the internet
-- **Cache**: Upstash-hosted Redis for cache-aside reads and the analytics-refresh worker
-- **Backups**: automated daily `pg_dump` → gzip → local disk (7-day retention) via a systemd timer
+**CI** runs the full pytest suite against a fresh Postgres 16 container on every push and PR to `main`. Render and Vercel then deploy the new commit.
 
-**Frontend** — deployed to Vercel, CDN-backed, auto-deployed on push.
-
-**CI/CD** — every push to `main` runs the full test suite against a live Postgres container, then (on success) SSHes into EC2, pulls, installs dependencies, runs `alembic upgrade head`, and restarts the service. See `.github/workflows/ci.yml`.
+**Self-hosting on a VM.** `backend/deploy/` holds the systemd units (API, worker, daily `pg_dump` backups) and the nginx TLS config from an earlier single-VM deployment. See [backend/deploy/README.md](backend/deploy/README.md).
 
 ---
 
 ## API Documentation
 
-- Swagger UI: **https://16-176-230-154.nip.io/docs**
-- ReDoc: **https://16-176-230-154.nip.io/redoc**
-- GraphQL Playground: **https://16-176-230-154.nip.io/graphql**
+- Swagger UI: **https://railsphere-api.onrender.com/docs**
+- ReDoc: **https://railsphere-api.onrender.com/redoc**
+- GraphQL Playground: **https://railsphere-api.onrender.com/graphql**
 
 ---
 
@@ -330,7 +329,7 @@ pytest -v
 <details open>
 <summary><strong>Performance & reliability</strong></summary>
 
-- [x] Materialized views for analytics, refreshed by a scheduled background job
+- [x] Materialized views for analytics, refreshed by a scheduled background job (`arq` worker)
 - [x] Redis cache-aside layer for hot read paths, with a circuit breaker around cache calls
 - [x] `route_stations` (415k+ rows) hash-partitioned by `route_id` across 8 partitions
 - [x] gzip response compression + HTTP caching (`Cache-Control`/`ETag`, conditional `304`s)
@@ -345,7 +344,7 @@ pytest -v
 - [x] Field-level encryption at rest for `User.email` (Fernet + HMAC blind index for lookups)
 - [x] Reference-data writes (stations/trains/routes/route-stations) gated behind an admin flag, not just login
 - [x] Request-id tracing + per-IP rate limiting
-- [x] EC2 security group hardened: closed the direct gunicorn port, documented the SSH tradeoff
+- [x] Database bound to private networking only, never exposed to the internet
 - [x] OpenTelemetry distributed tracing (Jaeger), opt-in via `OTEL_EXPORTER_OTLP_ENDPOINT`
 - [x] Prometheus + Grafana monitoring stack, provisioned as code, with a live dashboard
 
@@ -355,9 +354,9 @@ pytest -v
 <summary><strong>Infra & delivery</strong></summary>
 
 - [x] Docker + docker-compose (API, Postgres, Redis, Jaeger, Prometheus, Grafana, worker)
-- [x] CI/CD auto-deploy to EC2 on push to `main`, migrations run automatically
-- [x] Automated daily Postgres backups (`pg_dump` → gzip → local disk, 7-day retention)
-- [x] Dataset files (95MB) hosted on S3, private bucket
+- [x] CI on every push; Render + Vercel auto-deploy, migrations applied on boot
+- [x] Migrated from a single AWS EC2 box to Vercel + Render + Neon with zero data loss (row counts and encrypted PII verified after cutover)
+- [x] Automated daily Postgres backups for self-hosted deployments (`pg_dump` → gzip, 7-day retention)
 
 </details>
 
